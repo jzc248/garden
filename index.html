@@ -365,6 +365,8 @@
         <button onclick="exportData()">Save backup</button>
         <span>·</span>
         <button onclick="importData()">Restore backup</button>
+        <span>·</span>
+        <button id="gh-save-btn" onclick="saveToGithub()">☁️ Save to GitHub</button>
       </div>
     </div>
     <!-- Sidebar plant card (desktop — replaces filter body when a plant is selected) -->
@@ -494,6 +496,7 @@ MONTHS_FULL.forEach(m => { HALF_MONTHS.push('Early '+m); HALF_MONTHS.push('Late 
 // HALF_MONTHS[0] = 'Early January' … [23] = 'Late December'
 
 const STORAGE_KEY = 'garden-twin-v2';
+const EDIT_PASSWORD = 'aster';
 
 const TYPE_COLOR = {
   tree:        '#2D5236',
@@ -524,132 +527,1434 @@ const DASHED_BORDER = new Set(['tree','spreading','groundcover','annual']);
 // PLANT CATALOG
 // ─────────────────────────────────────────────────────
 const INIT_CATALOG = [
-  {id:'p01',name:'Alchemilla mollis',         commonName:"Lady's Mantle",              type:'groundcover',sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Moderate',  spreadType:'Self-seeds',bloomStart:'Early June',  bloomEnd:'Late June',      autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, humus-rich; tolerates clay',                         native:false, photoUrl:'https://upload.wikimedia.org/wikipedia/commons/9/99/Alchemilla_mollis_%28Fraaie_vrouwenmantel_bloeiwijze%291.jpg',      notes:''},
-  {id:'p02',name:'Eriocapitella vitifolia',   commonName:'Japanese Anemone',           type:'spreading',  sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Moderate',  spreadType:'Rhizomes',  bloomStart:'Early September', bloomEnd:'Early October',   autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, well-drained; humus-rich',                            native:false, photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/305000472/original.jpg',      notes:''},
-  {id:'p03',name:'Cornus florida',            commonName:'Flowering Dogwood',          type:'tree',       sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Early April', bloomEnd:'Late April',     autumnFoliage:'yes',winterInterest:'structural', soilNotes:'Moist, acidic, well-drained; woodland',                     native:true,  photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/37787988/original.jpeg',         notes:'Native; red berries and attractive bark'},
-  {id:'p04',name:'Kalmia latifolia',          commonName:'Mountain Laurel',            type:'shrub',      sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Late May',    bloomEnd:'Early June',      autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Acidic, well-drained; woodland',                            native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Kalmia_latifolia1.jpg',         notes:'Native; toxic to animals'},
-  {id:'p05',name:'Hydrangea quercifolia',     commonName:'Oakleaf Hydrangea',          type:'shrub',      sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Low',       spreadType:'Clumping',  bloomStart:'Early June',  bloomEnd:'Late July',      autumnFoliage:'yes',winterInterest:'structural', soilNotes:'Moist, well-drained; tolerates part shade',                 native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea_quercifolia.jpg',     notes:'Exfoliating bark; great fall color'},
-  {id:'p06',name:'Hydrangea paniculata',      commonName:'Panicle Hydrangea',          type:'shrub',      sunNeeds:'Full sun',      waterNeeds:'Medium',spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Early August',bloomEnd:'Late October', autumnFoliage:'no', winterInterest:'structural', soilNotes:'Moist, well-drained; adaptable',                            native:false, photoUrl:'https://upload.wikimedia.org/wikipedia/commons/5/59/Hydrangea_paniculata_IMG_6629.JPG',         notes:'Dried flower heads persist through winter'},
-  {id:'p07',name:'Cryptomeria japonica',      commonName:'Japanese Cedar',             type:'tree',       sunNeeds:'Full sun',      waterNeeds:'Medium',spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'',            bloomEnd:'',               autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Moist, acidic, well-drained',                               native:false, photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/98528458/original.jpg', notes:'Evergreen conifer'},
-  {id:'p08',name:'Rosa meifranjin',           commonName:'Drift Rose',                 type:'shrub',      sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Early May',   bloomEnd:'Early June',   autumnFoliage:'no', winterInterest:'structural', soilNotes:'Well-drained; adaptable; pH 6–7',                           native:false, photoUrl:'https://justthissideofparadisefarm.com/cdn/shop/files/4kqteDTxLlvc8n9FRN_p4VpvKlSMBQzeQvxYwqBynXA.jpg',    notes:'Disease-resistant; long-blooming; rose hips'},
-  {id:'p09',name:'Hibiscus moscheutos',       commonName:'Swamp Rose Mallow',          type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'High',  spreadAggression:'Low',       spreadType:'Clumping',  bloomStart:'Late July',  bloomEnd:'Late September', autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist to wet; tolerates clay',                              native:true,  photoUrl:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7FHU_lx_XwMk_S-Rp5xkQxBUlGsj31i_ufdYrSclGWg&s=10',      notes:'Native; flowers up to 12" across'},
-  {id:'p10',name:'Juncus effusus',            commonName:'Common Rush',                type:'grass',      sunNeeds:'Full sun',      waterNeeds:'High',  spreadAggression:'Moderate',  spreadType:'Rhizomes',  bloomStart:'Early June',  bloomEnd:'Late August',    autumnFoliage:'no', winterInterest:'structural', soilNotes:'Wet to moist; tolerates standing water',                    native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/0/0c/Juncus_effuses.jpg',       notes:'Persistent stems add winter interest'},
-  {id:'p11',name:'Carex pensylvanica',        commonName:'Pennsylvania Sedge',         type:'grass',      sunNeeds:'Full shade',    waterNeeds:'Low',   spreadAggression:'Moderate',  spreadType:'Stolons',   bloomStart:'Early April', bloomEnd:'Late May',       autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Dry to moist, acidic; tolerates dry shade',                 native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Carex_pensylvanica.jpg',        notes:'Native; lawn alternative under trees'},
-  {id:'p12',name:'Clematis virginiana',       commonName:"Virgin's Bower",             type:'vine',       sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Aggressive',spreadType:'Self-seeds',bloomStart:'Late August', bloomEnd:'Late September', autumnFoliage:'no', winterInterest:'structural', soilNotes:'Moist, adaptable',                                          native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/5/57/Clematis_virginiana_001.JPG',         notes:'Fluffy seed heads persist; can spread aggressively'},
-  {id:'p13',name:'Eurybia macrophylla',       commonName:'Bigleaf Aster',              type:'spreading',  sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Moderate',  spreadType:'Rhizomes',  bloomStart:'Early August',bloomEnd:'Early October',  autumnFoliage:'no', winterInterest:'none',      soilNotes:'Dry to moist, acidic; woodland shade',                      native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/d/d3/Aster_macrophyllus_2021-09-02_0706.jpg',        notes:'Native; tolerates dry shade'},
-  {id:'p14',name:'Eurybia divaricata',        commonName:'White Wood Aster',           type:'spreading',  sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Moderate',  spreadType:'Self-seeds',bloomStart:'Early August',bloomEnd:'Late October',   autumnFoliage:'no', winterInterest:'none',      soilNotes:'Dry, acidic; excellent for deep shade',                     native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/7/75/Eurybia_divaricata_in_CT.jpg',        notes:'Native; thrives in dry shade'},
-  {id:'p15',name:'Symphyotrichum novi-belgii',commonName:'New York Aster',             type:'spreading',  sunNeeds:'Full sun',      waterNeeds:'Medium',spreadAggression:'Moderate',  spreadType:'Rhizomes',  bloomStart:'Early September',bloomEnd:'Late October',autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, adaptable; tolerates clay',                          native:true,  photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/96378098/medium.jpeg',         notes:'Native; important fall pollinator plant'},
-  {id:'p16',name:'Astilbe japonica',          commonName:'Japanese Astilbe',           type:'clumping',   sunNeeds:'Part sun/shade',waterNeeds:'High',  spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Late June',  bloomEnd:'Early July',    autumnFoliage:'no', winterInterest:'structural', soilNotes:'Moist, humus-rich; no drought',                             native:false, photoUrl:'https://upload.wikimedia.org/wikipedia/commons/8/8c/Astilbe_sp2.jpg',       notes:'Feathery plumes; seed heads persist'},
-  {id:'p17',name:'Thymus vulgaris',           commonName:'Common Thyme',               type:'groundcover',sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Stolons',   bloomStart:'Late May',    bloomEnd:'Early July',     autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Well-drained, lean soil; drought tolerant',                 native:false, photoUrl:'https://upload.wikimedia.org/wikipedia/commons/c/ce/Thymus_vulgaris_001.JPG',       notes:'Culinary herb; fragrant; semi-evergreen'},
-  {id:'p18',name:'Geranium sanguineum',       commonName:'Bloody Cranesbill',          type:'groundcover',sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Clumping',  bloomStart:'Early May',   bloomEnd:'Early June',     autumnFoliage:'yes',winterInterest:'none',      soilNotes:'Well-drained; drought tolerant once established',            native:false, photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Geranium_sanguineum1.jpg',       notes:'Excellent red fall color; long bloom'},
-  {id:'p19',name:'Geranium lucidum',          commonName:'Shining Cranesbill',         type:'groundcover',sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Moderate',  spreadType:'Self-seeds',bloomStart:'Early May', bloomEnd:'Early June',      autumnFoliage:'yes',winterInterest:'none',      soilNotes:'Well-drained, even dry; adaptable',                         native:false, photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/123333936/original.jpg',         notes:'Glossy red fall foliage; self-seeding'},
-  {id:'p20',name:'Oenothera speciosa',        commonName:'Evening Primrose',           type:'spreading',  sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Aggressive',spreadType:'Rhizomes',  bloomStart:'Late May',    bloomEnd:'Late June',   autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained, lean; drought tolerant',                      native:false, photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Oenothera_speciosa.jpg',        notes:'Spreads aggressively; attracts pollinators'},
-  {id:'p21',name:'Penstemon digitalis',       commonName:'Foxglove Beardtongue',       type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Self-seeds',bloomStart:'Late May',   bloomEnd:'Early June',     autumnFoliage:'no', winterInterest:'structural', soilNotes:'Well-drained; tolerates clay and drought',                  native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Penstemon_digitalis.jpg',       notes:"Native; 'Husker Red' has bronze foliage"},
-  {id:'p22',name:'Symphyotrichum laeve',      commonName:'Smooth Aster',               type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Self-seeds',bloomStart:'Late August', bloomEnd:'Late October',   autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained; drought tolerant',                            native:true,  photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/220039190/original.jpeg',    notes:'Native; distinctive blue-gray foliage'},
-  {id:'p23',name:'Echinacea purpurea',        commonName:'Purple Coneflower',          type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Self-seeds',bloomStart:'Early July',   bloomEnd:'Late July',autumnFoliage:'no', winterInterest:'structural', soilNotes:'Well-drained; drought tolerant once established',            native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/6/66/Purple_Coneflower_%28Echinacea_purpurea%29-1.JPG',        notes:'Native; seed heads feed birds through winter'},
-  {id:'p24',name:'Asclepias incarnata',       commonName:'Swamp Milkweed',             type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'High',  spreadAggression:'Low',       spreadType:'Self-seeds',bloomStart:'Late June',  bloomEnd:'Late July',    autumnFoliage:'no', winterInterest:'structural', soilNotes:'Moist to wet; tolerates standing water',                    native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/5/53/Danaus_plexippus_on_Asclepias_incarnata_4999.jpg',       notes:'Native; monarch butterfly host plant; silky seed pods'},
-  {id:'p25',name:'Scutellaria incana',        commonName:'Appalachian Blues Skullcap', type:'clumping',   sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Clumping',  bloomStart:'Early June',  bloomEnd:'Late June',    autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained, acidic; woodland',                            native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Scutellaria_incana.jpg',        notes:'Native; good for pollinators'},
-  {id:'p26',name:'Monarda fistulosa',         commonName:'Wild Bergamot',              type:'spreading',  sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Moderate',  spreadType:'Rhizomes',  bloomStart:'Late July',  bloomEnd:'Early August',autumnFoliage:'no', winterInterest:'structural', soilNotes:'Well-drained; drought tolerant',                            native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Monarda_fistulosa.jpg',         notes:'Native; attracts hummingbirds and bees; seed heads persist'},
-  {id:'p27',name:'Iris versicolor',           commonName:'Blue Flag Iris',             type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'High',  spreadAggression:'Moderate',  spreadType:'Rhizomes',  bloomStart:'Late May',    bloomEnd:'Early June',      autumnFoliage:'no', winterInterest:'structural', soilNotes:'Wet to moist; excellent for pond edges',                    native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Iris_versicolor_3.jpg',         notes:'Native; prefers wet soils; seed pods persist'},
-  {id:'p28',name:'Agastache foeniculum',      commonName:'Anise Hyssop',               type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Moderate',  spreadType:'Self-seeds',bloomStart:'Late July',  bloomEnd:'Late August', autumnFoliage:'no', winterInterest:'structural', soilNotes:'Well-drained; drought tolerant',                            native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Agastache_foeniculum.jpg',      notes:'Native; anise fragrance; seed spikes for birds'},
-  {id:'p29',name:'Amsonia hubrichtii',        commonName:'Bluestar',                   type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Late April',  bloomEnd:'Late May',       autumnFoliage:'yes',winterInterest:'none',      soilNotes:'Well-drained; drought tolerant once established',            native:true,  photoUrl:'https://static.inaturalist.org/photos/847249/large.jpg',         notes:'Native; spectacular golden fall foliage'},
-  {id:'p30',name:'Salvia officinalis',        commonName:'Garden Sage',                type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Early June',  bloomEnd:'Early July',     autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Well-drained, lean; drought tolerant',                      native:false, photoUrl:'https://upload.wikimedia.org/wikipedia/commons/5/5a/Salvia_officinalis0.jpg',    notes:'Culinary herb; semi-evergreen subshrub'},
-  {id:'p31',name:'Allium cernuum',            commonName:'Nodding Onion',              type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Offsets',   bloomStart:'Early July',  bloomEnd:'Late August',    autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained; drought tolerant',                            native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Allium_cernuum.jpg',            notes:'Native; edible; deer resistant'},
-  {id:'p32',name:'Baptisia australis',        commonName:'Blue False Indigo',          type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Late April',  bloomEnd:'Early June',     autumnFoliage:'yes',winterInterest:'structural', soilNotes:'Well-drained; drought tolerant; nitrogen-fixing',           native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Baptisia_australis_Baptysja_b%C5%82%C4%99kitna_2021-06-02_02.jpg/250px-Baptisia_australis_Baptysja_b%C5%82%C4%99kitna_2021-06-02_02.jpg',     notes:'Native; inflated black seed pods; yellow fall color'},
-  {id:'p33',name:'Brunnera macrophylla',      commonName:'Brunnera',                   type:'groundcover',sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Low',       spreadType:'Self-seeds',bloomStart:'Late April', bloomEnd:'Early June',     autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, humus-rich; no drought',                             native:false, photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/36017337/original.jpg',    notes:'Silver-marked leaves; forget-me-not flowers'},
-  {id:'p34',name:'Tiarella cordifolia',       commonName:'Foamflower',                 type:'groundcover',sunNeeds:'Full shade',    waterNeeds:'Medium',spreadAggression:'Moderate',  spreadType:'Stolons',   bloomStart:'Late April', bloomEnd:'Late May',      autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Moist, acidic, humus-rich; woodland',                       native:true,  photoUrl:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRSaZQQ02mPgFCiFQnqAY-Z5beJrWDHHKkJSOvfDdfig&s=10',     notes:'Native; semi-evergreen groundcover for shade'},
-  {id:'p35',name:'Heuchera americana',        commonName:'American Alumroot',          type:'clumping',   sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Late May',    bloomEnd:'Early June',     autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Well-drained, moist; woodland',                             native:true,  photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Heuchera_americana.jpg',        notes:'Native; semi-evergreen; deer resistant'},
-  {id:'p36',name:'Sedum ternatum',            commonName:'Woodland Stonecrop',         type:'groundcover',sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Stolons',   bloomStart:'Late April', bloomEnd:'Late May',       autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Well-drained, rocky; dry shade tolerant',                   native:true,  photoUrl:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Sedum_ternatum%2C_2024-04-30%2C_Kane_Woods%2C_01.jpg/1280px-Sedum_ternatum%2C_2024-04-30%2C_Kane_Woods%2C_01.jpg',       notes:'Native; semi-evergreen succulent groundcover'},
-  {id:'p37',name:'Liatris spicata',           commonName:'Blazing Star',               type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',       spreadType:'Clumping',  bloomStart:'Late July',  bloomEnd:'Early August',autumnFoliage:'no', winterInterest:'structural', soilNotes:'Well-drained; tolerates lean soil',                         native:true,  photoUrl:'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSa6DoJ981UHu5gHYJrFxaCfoDF2njGm16fm-W-8yFi1A&s=10',      notes:'Native; blooms top-down; attracts monarchs; seed heads persist'},
-  {id:'p38',name:'Salvia nemorosa',           commonName:'Woodland Sage',              type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Late May',    bloomEnd:'Late June',     autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained; drought tolerant',                            native:false, photoUrl:'https://upload.wikimedia.org/wikipedia/commons/b/b2/Salvia_nemorosa_2.jpg?utm_source=species.wikimedia.org&utm_campaign=index&utm_content=original',          notes:'Reblooms if cut back; excellent for bees'},
-  {id:'p39',name:'Helleborus orientalis',     commonName:'Lenten Rose',                type:'clumping',   sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Low',       spreadType:'Self-seeds',bloomStart:'Early March',bloomEnd:'Late April',    autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Moist, humus-rich; good drainage; woodland',                native:false, photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Helleborus_orientalis.jpg',     notes:'Evergreen; earliest bloomer; deer resistant; toxic if ingested'},
-  {id:'p40',name:'Distylium racemosum',       commonName:'Distylium',                  type:'shrub',      sunNeeds:'Part sun/shade',waterNeeds:'Low',   spreadAggression:'Clumping',  spreadType:'Clumping',  bloomStart:'Early March', bloomEnd:'Early May',      autumnFoliage:'no', winterInterest:'evergreen', soilNotes:'Well-drained, acidic; adaptable',                           native:false, photoUrl:'https://static.inaturalist.org/photos/227361675/medium.jpeg',     notes:'Evergreen shrub; attractive reddish winter stems; deer resistant'},
+  {
+    "id": "p01",
+    "name": "Alchemilla mollis",
+    "commonName": "Lady's Mantle",
+    "type": "groundcover",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Moderate",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Early June",
+    "bloomEnd": "Late June",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Moist, humus-rich; tolerates clay",
+    "native": false,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/9/99/Alchemilla_mollis_%28Fraaie_vrouwenmantel_bloeiwijze%291.jpg",
+    "notes": ""
+  },
+  {
+    "id": "p02",
+    "name": "Eriocapitella vitifolia",
+    "commonName": "Japanese Anemone",
+    "type": "spreading",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Moderate",
+    "spreadType": "Rhizomes",
+    "bloomStart": "Early September",
+    "bloomEnd": "Early October",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Moist, well-drained; humus-rich",
+    "native": false,
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/305000472/original.jpg",
+    "notes": ""
+  },
+  {
+    "id": "p03",
+    "name": "Cornus florida",
+    "commonName": "Flowering Dogwood",
+    "type": "tree",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Early April",
+    "bloomEnd": "Late April",
+    "autumnFoliage": "yes",
+    "winterInterest": "structural",
+    "soilNotes": "Moist, acidic, well-drained; woodland",
+    "native": true,
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/37787988/original.jpeg",
+    "notes": "Native; red berries and attractive bark"
+  },
+  {
+    "id": "p04",
+    "name": "Kalmia latifolia",
+    "commonName": "Mountain Laurel",
+    "type": "shrub",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Late May",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Acidic, well-drained; woodland",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Kalmia_latifolia1.jpg",
+    "notes": "Native; toxic to animals"
+  },
+  {
+    "id": "p05",
+    "name": "Hydrangea quercifolia",
+    "commonName": "Oakleaf Hydrangea",
+    "type": "shrub",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Low",
+    "spreadType": "Clumping",
+    "bloomStart": "Early June",
+    "bloomEnd": "Late July",
+    "autumnFoliage": "yes",
+    "winterInterest": "structural",
+    "soilNotes": "Moist, well-drained; tolerates part shade",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Hydrangea_quercifolia.jpg",
+    "notes": "Exfoliating bark; great fall color"
+  },
+  {
+    "id": "p06",
+    "name": "Hydrangea paniculata",
+    "commonName": "Panicle Hydrangea",
+    "type": "shrub",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Early August",
+    "bloomEnd": "Late October",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Moist, well-drained; adaptable",
+    "native": false,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/5/59/Hydrangea_paniculata_IMG_6629.JPG",
+    "notes": "Dried flower heads persist through winter"
+  },
+  {
+    "id": "p07",
+    "name": "Cryptomeria japonica",
+    "commonName": "Japanese Cedar",
+    "type": "tree",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "",
+    "bloomEnd": "",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Moist, acidic, well-drained",
+    "native": false,
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/98528458/original.jpg",
+    "notes": "Evergreen conifer"
+  },
+  {
+    "id": "p08",
+    "name": "Rosa meifranjin",
+    "commonName": "Drift Rose",
+    "type": "shrub",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Early May",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Well-drained; adaptable; pH 6–7",
+    "native": false,
+    "photoUrl": "https://justthissideofparadisefarm.com/cdn/shop/files/4kqteDTxLlvc8n9FRN_p4VpvKlSMBQzeQvxYwqBynXA.jpg",
+    "notes": "Disease-resistant; long-blooming; rose hips"
+  },
+  {
+    "id": "p09",
+    "name": "Hibiscus moscheutos",
+    "commonName": "Swamp Rose Mallow",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "High",
+    "spreadAggression": "Low",
+    "spreadType": "Clumping",
+    "bloomStart": "Late July",
+    "bloomEnd": "Late September",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Moist to wet; tolerates clay",
+    "native": true,
+    "photoUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7FHU_lx_XwMk_S-Rp5xkQxBUlGsj31i_ufdYrSclGWg&s=10",
+    "notes": "Native; flowers up to 12\" across"
+  },
+  {
+    "id": "p10",
+    "name": "Juncus effusus",
+    "commonName": "Common Rush",
+    "type": "grass",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "High",
+    "spreadAggression": "Moderate",
+    "spreadType": "Rhizomes",
+    "bloomStart": "Early June",
+    "bloomEnd": "Late August",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Wet to moist; tolerates standing water",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Juncus_effuses.jpg",
+    "notes": "Persistent stems add winter interest"
+  },
+  {
+    "id": "p11",
+    "name": "Carex pensylvanica",
+    "commonName": "Pennsylvania Sedge",
+    "type": "grass",
+    "sunNeeds": "Full shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Moderate",
+    "spreadType": "Stolons",
+    "bloomStart": "Early April",
+    "bloomEnd": "Late May",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Dry to moist, acidic; tolerates dry shade",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Carex_pensylvanica.jpg",
+    "notes": "Native; lawn alternative under trees"
+  },
+  {
+    "id": "p12",
+    "name": "Clematis virginiana",
+    "commonName": "Virgin's Bower",
+    "type": "vine",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Aggressive",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Late August",
+    "bloomEnd": "Late September",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Moist, adaptable",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/5/57/Clematis_virginiana_001.JPG",
+    "notes": "Fluffy seed heads persist; can spread aggressively"
+  },
+  {
+    "id": "p13",
+    "name": "Eurybia macrophylla",
+    "commonName": "Bigleaf Aster",
+    "type": "spreading",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Moderate",
+    "spreadType": "Rhizomes",
+    "bloomStart": "Early August",
+    "bloomEnd": "Early October",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Dry to moist, acidic; woodland shade",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Aster_macrophyllus_2021-09-02_0706.jpg",
+    "notes": "Native; tolerates dry shade"
+  },
+  {
+    "id": "p14",
+    "name": "Eurybia divaricata",
+    "commonName": "White Wood Aster",
+    "type": "spreading",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Moderate",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Early August",
+    "bloomEnd": "Late October",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Dry, acidic; excellent for deep shade",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/7/75/Eurybia_divaricata_in_CT.jpg",
+    "notes": "Native; thrives in dry shade"
+  },
+  {
+    "id": "p15",
+    "name": "Symphyotrichum novi-belgii",
+    "commonName": "New York Aster",
+    "type": "spreading",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Moderate",
+    "spreadType": "Rhizomes",
+    "bloomStart": "Early September",
+    "bloomEnd": "Late October",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Moist, adaptable; tolerates clay",
+    "native": true,
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/96378098/medium.jpeg",
+    "notes": "Native; important fall pollinator plant"
+  },
+  {
+    "id": "p16",
+    "name": "Astilbe japonica",
+    "commonName": "Japanese Astilbe",
+    "type": "clumping",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "High",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Late June",
+    "bloomEnd": "Early July",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Moist, humus-rich; no drought",
+    "native": false,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Astilbe_sp2.jpg",
+    "notes": "Feathery plumes; seed heads persist"
+  },
+  {
+    "id": "p17",
+    "name": "Thymus vulgaris",
+    "commonName": "Common Thyme",
+    "type": "groundcover",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Stolons",
+    "bloomStart": "Late May",
+    "bloomEnd": "Early July",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Well-drained, lean soil; drought tolerant",
+    "native": false,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/c/ce/Thymus_vulgaris_001.JPG",
+    "notes": "Culinary herb; fragrant; semi-evergreen"
+  },
+  {
+    "id": "p18",
+    "name": "Geranium sanguineum",
+    "commonName": "Bloody Cranesbill",
+    "type": "groundcover",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Clumping",
+    "bloomStart": "Early May",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "yes",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained; drought tolerant once established",
+    "native": false,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Geranium_sanguineum1.jpg",
+    "notes": "Excellent red fall color; long bloom"
+  },
+  {
+    "id": "p19",
+    "name": "Geranium lucidum",
+    "commonName": "Shining Cranesbill",
+    "type": "groundcover",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Moderate",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Early May",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "yes",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained, even dry; adaptable",
+    "native": false,
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/123333936/original.jpg",
+    "notes": "Glossy red fall foliage; self-seeding"
+  },
+  {
+    "id": "p20",
+    "name": "Oenothera speciosa",
+    "commonName": "Evening Primrose",
+    "type": "spreading",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Aggressive",
+    "spreadType": "Rhizomes",
+    "bloomStart": "Late May",
+    "bloomEnd": "Late June",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained, lean; drought tolerant",
+    "native": false,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Oenothera_speciosa.jpg",
+    "notes": "Spreads aggressively; attracts pollinators"
+  },
+  {
+    "id": "p21",
+    "name": "Penstemon digitalis",
+    "commonName": "Foxglove Beardtongue",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Late May",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Well-drained; tolerates clay and drought",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Penstemon_digitalis.jpg",
+    "notes": "Native; 'Husker Red' has bronze foliage"
+  },
+  {
+    "id": "p22",
+    "name": "Symphyotrichum laeve",
+    "commonName": "Smooth Aster",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Late August",
+    "bloomEnd": "Late October",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained; drought tolerant",
+    "native": true,
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/220039190/original.jpeg",
+    "notes": "Native; distinctive blue-gray foliage"
+  },
+  {
+    "id": "p23",
+    "name": "Echinacea purpurea",
+    "commonName": "Purple Coneflower",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Early July",
+    "bloomEnd": "Late July",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Well-drained; drought tolerant once established",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/6/66/Purple_Coneflower_%28Echinacea_purpurea%29-1.JPG",
+    "notes": "Native; seed heads feed birds through winter"
+  },
+  {
+    "id": "p24",
+    "name": "Asclepias incarnata",
+    "commonName": "Swamp Milkweed",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "High",
+    "spreadAggression": "Low",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Late June",
+    "bloomEnd": "Late July",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Moist to wet; tolerates standing water",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/5/53/Danaus_plexippus_on_Asclepias_incarnata_4999.jpg",
+    "notes": "Native; monarch butterfly host plant; silky seed pods"
+  },
+  {
+    "id": "p25",
+    "name": "Scutellaria incana",
+    "commonName": "Appalachian Blues Skullcap",
+    "type": "clumping",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Clumping",
+    "bloomStart": "Early June",
+    "bloomEnd": "Late June",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained, acidic; woodland",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Scutellaria_incana.jpg",
+    "notes": "Native; good for pollinators"
+  },
+  {
+    "id": "p26",
+    "name": "Monarda fistulosa",
+    "commonName": "Wild Bergamot",
+    "type": "spreading",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Moderate",
+    "spreadType": "Rhizomes",
+    "bloomStart": "Late July",
+    "bloomEnd": "Early August",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Well-drained; drought tolerant",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Monarda_fistulosa.jpg",
+    "notes": "Native; attracts hummingbirds and bees; seed heads persist"
+  },
+  {
+    "id": "p27",
+    "name": "Iris versicolor",
+    "commonName": "Blue Flag Iris",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "High",
+    "spreadAggression": "Moderate",
+    "spreadType": "Rhizomes",
+    "bloomStart": "Late May",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Wet to moist; excellent for pond edges",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Iris_versicolor_3.jpg",
+    "notes": "Native; prefers wet soils; seed pods persist"
+  },
+  {
+    "id": "p28",
+    "name": "Agastache foeniculum",
+    "commonName": "Anise Hyssop",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Moderate",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Late July",
+    "bloomEnd": "Late August",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Well-drained; drought tolerant",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Agastache_foeniculum.jpg",
+    "notes": "Native; anise fragrance; seed spikes for birds"
+  },
+  {
+    "id": "p29",
+    "name": "Amsonia hubrichtii",
+    "commonName": "Bluestar",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Late April",
+    "bloomEnd": "Late May",
+    "autumnFoliage": "yes",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained; drought tolerant once established",
+    "native": true,
+    "photoUrl": "https://static.inaturalist.org/photos/847249/large.jpg",
+    "notes": "Native; spectacular golden fall foliage"
+  },
+  {
+    "id": "p30",
+    "name": "Salvia officinalis",
+    "commonName": "Garden Sage",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Early June",
+    "bloomEnd": "Early July",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Well-drained, lean; drought tolerant",
+    "native": false,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Salvia_officinalis0.jpg",
+    "notes": "Culinary herb; semi-evergreen subshrub"
+  },
+  {
+    "id": "p31",
+    "name": "Allium cernuum",
+    "commonName": "Nodding Onion",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Offsets",
+    "bloomStart": "Early July",
+    "bloomEnd": "Late August",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained; drought tolerant",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Allium_cernuum.jpg",
+    "notes": "Native; edible; deer resistant"
+  },
+  {
+    "id": "p32",
+    "name": "Baptisia australis",
+    "commonName": "Blue False Indigo",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Late April",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "yes",
+    "winterInterest": "structural",
+    "soilNotes": "Well-drained; drought tolerant; nitrogen-fixing",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Baptisia_australis_Baptysja_b%C5%82%C4%99kitna_2021-06-02_02.jpg/250px-Baptisia_australis_Baptysja_b%C5%82%C4%99kitna_2021-06-02_02.jpg",
+    "notes": "Native; inflated black seed pods; yellow fall color"
+  },
+  {
+    "id": "p33",
+    "name": "Brunnera macrophylla",
+    "commonName": "Brunnera",
+    "type": "groundcover",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Low",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Late April",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Moist, humus-rich; no drought",
+    "native": false,
+    "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/36017337/original.jpg",
+    "notes": "Silver-marked leaves; forget-me-not flowers"
+  },
+  {
+    "id": "p34",
+    "name": "Tiarella cordifolia",
+    "commonName": "Foamflower",
+    "type": "groundcover",
+    "sunNeeds": "Full shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Moderate",
+    "spreadType": "Stolons",
+    "bloomStart": "Late April",
+    "bloomEnd": "Late May",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Moist, acidic, humus-rich; woodland",
+    "native": true,
+    "photoUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRSaZQQ02mPgFCiFQnqAY-Z5beJrWDHHKkJSOvfDdfig&s=10",
+    "notes": "Native; semi-evergreen groundcover for shade"
+  },
+  {
+    "id": "p35",
+    "name": "Heuchera americana",
+    "commonName": "American Alumroot",
+    "type": "clumping",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Late May",
+    "bloomEnd": "Early June",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Well-drained, moist; woodland",
+    "native": true,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Heuchera_americana.jpg",
+    "notes": "Native; semi-evergreen; deer resistant"
+  },
+  {
+    "id": "p36",
+    "name": "Sedum ternatum",
+    "commonName": "Woodland Stonecrop",
+    "type": "groundcover",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Stolons",
+    "bloomStart": "Late April",
+    "bloomEnd": "Late May",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Well-drained, rocky; dry shade tolerant",
+    "native": true,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Sedum_ternatum%2C_2024-04-30%2C_Kane_Woods%2C_01.jpg/1280px-Sedum_ternatum%2C_2024-04-30%2C_Kane_Woods%2C_01.jpg",
+    "notes": "Native; semi-evergreen succulent groundcover"
+  },
+  {
+    "id": "p37",
+    "name": "Liatris spicata",
+    "commonName": "Blazing Star",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Low",
+    "spreadType": "Clumping",
+    "bloomStart": "Late July",
+    "bloomEnd": "Early August",
+    "autumnFoliage": "no",
+    "winterInterest": "structural",
+    "soilNotes": "Well-drained; tolerates lean soil",
+    "native": true,
+    "photoUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSa6DoJ981UHu5gHYJrFxaCfoDF2njGm16fm-W-8yFi1A&s=10",
+    "notes": "Native; blooms top-down; attracts monarchs; seed heads persist"
+  },
+  {
+    "id": "p38",
+    "name": "Salvia nemorosa",
+    "commonName": "Woodland Sage",
+    "type": "clumping",
+    "sunNeeds": "Full sun",
+    "waterNeeds": "Low",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Late May",
+    "bloomEnd": "Late June",
+    "autumnFoliage": "no",
+    "winterInterest": "none",
+    "soilNotes": "Well-drained; drought tolerant",
+    "native": false,
+    "photoUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Salvia_nemorosa_2.jpg?utm_source=species.wikimedia.org&utm_campaign=index&utm_content=original",
+    "notes": "Reblooms if cut back; excellent for bees"
+  },
+  {
+    "id": "p39",
+    "name": "Helleborus orientalis",
+    "commonName": "Lenten Rose",
+    "type": "clumping",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Medium",
+    "spreadAggression": "Low",
+    "spreadType": "Self-seeds",
+    "bloomStart": "Early March",
+    "bloomEnd": "Late April",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Moist, humus-rich; good drainage; woodland",
+    "native": false,
+    "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Helleborus_orientalis.jpg",
+    "notes": "Evergreen; earliest bloomer; deer resistant; toxic if ingested"
+  },
+  {
+    "id": "p40",
+    "name": "Distylium racemosum",
+    "commonName": "Distylium",
+    "type": "shrub",
+    "sunNeeds": "Part sun/shade",
+    "waterNeeds": "Low",
+    "spreadAggression": "Clumping",
+    "spreadType": "Clumping",
+    "bloomStart": "Early March",
+    "bloomEnd": "Early May",
+    "autumnFoliage": "no",
+    "winterInterest": "evergreen",
+    "soilNotes": "Well-drained, acidic; adaptable",
+    "native": false,
+    "photoUrl": "https://static.inaturalist.org/photos/227361675/medium.jpeg",
+    "notes": "Evergreen shrub; attractive reddish winter stems; deer resistant"
+  }
 ];
 
 // ─────────────────────────────────────────────────────
 // GARDEN LAYOUT  (83 instances from shapes.csv)
 // ─────────────────────────────────────────────────────
 const INIT_LAYOUT = [
-  {id:'i001',plantId:'p01',cx:10.532,cy:16.929,wFt:1.649,hFt:2.715},
-  {id:'i002',plantId:'p01',cx:11.752,cy:18.616,wFt:1.783,hFt:1.865},
-  {id:'i003',plantId:'p01',cx:7.057, cy:10.733,wFt:4.344,hFt:2.118},
-  {id:'i004',plantId:'p01',cx:2.390, cy:4.754, wFt:3.303,hFt:1.105},
-  {id:'i005',plantId:'p02',cx:5.276, cy:6.526, wFt:2.597,hFt:4.634},
-  {id:'i006',plantId:'p03',cx:9.887, cy:4.469, wFt:3.640,hFt:3.640},
-  {id:'i007',plantId:'p04',cx:1.746, cy:0.946, wFt:1.683,hFt:1.666},
-  {id:'i008',plantId:'p05',cx:13.020,cy:0.723, wFt:1.418,hFt:1.258},
-  {id:'i009',plantId:'p06',cx:13.804,cy:13.961,wFt:2.926,hFt:2.897},
-  {id:'i010',plantId:'p07',cx:13.978,cy:18.462,wFt:1.918,hFt:1.899},
-  {id:'i011',plantId:'p08',cx:4.593, cy:10.597,wFt:2.215,hFt:2.192},
-  {id:'i012',plantId:'p08',cx:10.437,cy:15.079,wFt:2.484,hFt:2.459},
-  {id:'i013',plantId:'p09',cx:13.773,cy:8.936, wFt:2.926,hFt:2.897},
-  {id:'i014',plantId:'p06',cx:13.804,cy:3.227, wFt:2.926,hFt:2.897},
-  {id:'i015',plantId:'p10',cx:12.835,cy:18.140,wFt:1.493,hFt:1.513},
-  {id:'i016',plantId:'p11',cx:8.462, cy:15.583,wFt:1.090,hFt:1.105},
-  {id:'i017',plantId:'p10',cx:3.012, cy:8.078, wFt:1.493,hFt:1.513},
-  {id:'i018',plantId:'p12',cx:6.994, cy:0.213, wFt:2.165,hFt:0.812},
-  {id:'i019',plantId:'p13',cx:9.293, cy:1.164, wFt:1.172,hFt:1.188},
-  {id:'i020',plantId:'p14',cx:6.962, cy:3.751, wFt:1.857,hFt:1.883},
-  {id:'i021',plantId:'p14',cx:6.067, cy:6.455, wFt:1.303,hFt:1.321},
-  {id:'i022',plantId:'p15',cx:11.227,cy:1.284, wFt:1.172,hFt:1.188},
-  {id:'i023',plantId:'p15',cx:12.247,cy:0.756, wFt:1.172,hFt:1.188},
-  {id:'i024',plantId:'p15',cx:10.189,cy:7.680, wFt:1.172,hFt:1.188},
-  {id:'i025',plantId:'p15',cx:9.340, cy:9.214, wFt:1.172,hFt:1.188},
-  {id:'i026',plantId:'p15',cx:6.281, cy:14.436,wFt:1.172,hFt:1.188},
-  {id:'i027',plantId:'p15',cx:2.134, cy:10.310,wFt:1.172,hFt:1.188},
-  {id:'i028',plantId:'p15',cx:7.490, cy:5.830, wFt:1.172,hFt:1.188},
-  {id:'i029',plantId:'p15',cx:0.926, cy:3.556, wFt:1.172,hFt:1.188},
-  {id:'i030',plantId:'p15',cx:13.016,cy:8.169, wFt:1.172,hFt:1.188},
-  {id:'i031',plantId:'p16',cx:11.313,cy:12.965,wFt:1.309,hFt:1.327},
-  {id:'i032',plantId:'p16',cx:12.927,cy:12.358,wFt:1.309,hFt:1.327},
-  {id:'i033',plantId:'p16',cx:9.037, cy:13.615,wFt:1.493,hFt:1.513},
-  {id:'i034',plantId:'p02',cx:6.793, cy:8.362, wFt:1.172,hFt:1.188},
-  {id:'i035',plantId:'p17',cx:3.455, cy:13.912,wFt:1.090,hFt:1.105},
-  {id:'i036',plantId:'p18',cx:0.494, cy:4.789, wFt:1.090,hFt:1.105},
-  {id:'i037',plantId:'p18',cx:0.494, cy:7.484, wFt:1.090,hFt:1.105},
-  {id:'i038',plantId:'p19',cx:7.371, cy:14.826,wFt:1.090,hFt:1.105},
-  {id:'i039',plantId:'p20',cx:0.949, cy:9.786, wFt:1.840,hFt:1.866},
-  {id:'i040',plantId:'p21',cx:12.341,cy:9.878, wFt:1.309,hFt:1.327},
-  {id:'i041',plantId:'p21',cx:7.204, cy:12.123,wFt:1.367,hFt:1.386},
-  {id:'i042',plantId:'p22',cx:12.341,cy:12.965,wFt:1.309,hFt:1.327},
-  {id:'i043',plantId:'p22',cx:7.784, cy:8.992, wFt:1.309,hFt:1.327},
-  {id:'i044',plantId:'p22',cx:1.645, cy:3.241, wFt:1.085,hFt:1.100},
-  {id:'i045',plantId:'p22',cx:1.780, cy:5.407, wFt:1.085,hFt:1.100},
-  {id:'i046',plantId:'p22',cx:6.041, cy:7.665, wFt:1.309,hFt:1.327},
-  {id:'i047',plantId:'p22',cx:11.515,cy:4.259, wFt:1.309,hFt:1.327},
-  {id:'i048',plantId:'p23',cx:5.837, cy:12.681,wFt:1.367,hFt:1.386},
-  {id:'i049',plantId:'p23',cx:6.647, cy:5.359, wFt:1.367,hFt:1.386},
-  {id:'i050',plantId:'p24',cx:7.209, cy:7.560, wFt:1.790,hFt:1.815},
-  {id:'i051',plantId:'p24',cx:3.120, cy:4.082, wFt:1.418,hFt:1.437},
-  {id:'i052',plantId:'p24',cx:4.688, cy:0.782, wFt:0.914,hFt:0.927},
-  {id:'i053',plantId:'p25',cx:0.404, cy:6.257, wFt:1.172,hFt:1.188},
-  {id:'i054',plantId:'p26',cx:11.374,cy:7.412, wFt:1.386,hFt:1.405},
-  {id:'i055',plantId:'p27',cx:2.248, cy:12.255,wFt:3.182,hFt:3.226},
-  {id:'i056',plantId:'p27',cx:14.451,cy:7.097, wFt:1.294,hFt:1.312},
-  {id:'i057',plantId:'p27',cx:14.451,cy:10.966,wFt:1.294,hFt:1.312},
-  {id:'i058',plantId:'p27',cx:1.089, cy:7.086, wFt:1.085,hFt:1.100},
-  {id:'i059',plantId:'p28',cx:6.714, cy:13.508,wFt:1.493,hFt:1.513},
-  {id:'i060',plantId:'p28',cx:6.398, cy:8.992, wFt:1.493,hFt:1.513},
-  {id:'i061',plantId:'p29',cx:3.788, cy:2.595, wFt:1.172,hFt:1.188},
-  {id:'i062',plantId:'p29',cx:9.589, cy:8.329, wFt:1.172,hFt:1.188},
-  {id:'i063',plantId:'p30',cx:0.365, cy:0.570, wFt:0.704,hFt:0.714},
-  {id:'i064',plantId:'p31',cx:2.299, cy:4.758, wFt:0.980,hFt:0.993},
-  {id:'i065',plantId:'p31',cx:10.045,cy:13.428,wFt:0.980,hFt:0.993},
-  {id:'i066',plantId:'p21',cx:8.396, cy:4.038, wFt:1.309,hFt:1.327},
-  {id:'i069',plantId:'p32',cx:4.469, cy:4.046, wFt:1.282,hFt:1.299},
-  {id:'i070',plantId:'p33',cx:11.661,cy:16.695,wFt:1.296,hFt:1.314},
-  {id:'i071',plantId:'p34',cx:11.130,cy:14.436,wFt:1.296,hFt:1.314},
-  {id:'i072',plantId:'p34',cx:9.596, cy:2.912, wFt:1.296,hFt:1.314},
-  {id:'i073',plantId:'p35',cx:12.842,cy:4.273, wFt:1.296,hFt:1.314},
-  {id:'i074',plantId:'p19',cx:9.745, cy:16.427,wFt:1.090,hFt:1.105},
-  {id:'i075',plantId:'p36',cx:1.267, cy:2.017, wFt:0.989,hFt:1.003},
-  {id:'i076',plantId:'p36',cx:4.860, cy:13.842,wFt:1.518,hFt:1.539},
-  {id:'i077',plantId:'p36',cx:12.503,cy:18.457,wFt:1.518,hFt:1.539},
-  {id:'i078',plantId:'p29',cx:2.462, cy:9.519, wFt:1.172,hFt:1.188},
-  {id:'i079',plantId:'p37',cx:10.324,cy:2.017, wFt:0.300,hFt:0.300},
-  {id:'i080',plantId:'p02',cx:6.045, cy:1.939, wFt:2.597,hFt:1.883},
-  {id:'i081',plantId:'p02',cx:11.707,cy:11.590,wFt:2.597,hFt:1.843},
-  {id:'i082',plantId:'p38',cx:6.053, cy:2.861, wFt:0.300,hFt:0.300},
+  {
+    "id": "i002",
+    "plantId": "p01",
+    "cx": 11.62239089202881,
+    "cy": 19.34293634033203,
+    "wFt": 1.5,
+    "hFt": 1.5,
+    "status": "existing"
+  },
+  {
+    "id": "i003",
+    "plantId": "p01",
+    "cx": 7.057,
+    "cy": 10.733,
+    "wFt": 1.5,
+    "hFt": 1.5,
+    "status": "existing"
+  },
+  {
+    "id": "i004",
+    "plantId": "p01",
+    "cx": 2.39,
+    "cy": 4.754,
+    "wFt": 3.303,
+    "hFt": 1.105,
+    "status": "existing"
+  },
+  {
+    "id": "i005",
+    "plantId": "p02",
+    "cx": 5.276,
+    "cy": 6.526,
+    "wFt": 2.597,
+    "hFt": 4.634,
+    "status": "existing"
+  },
+  {
+    "id": "i006",
+    "plantId": "p03",
+    "cx": 9.887,
+    "cy": 4.469,
+    "wFt": 3.64,
+    "hFt": 3.64,
+    "status": "existing"
+  },
+  {
+    "id": "i007",
+    "plantId": "p04",
+    "cx": 1.746,
+    "cy": 0.946,
+    "wFt": 1.683,
+    "hFt": 1.666,
+    "status": "existing"
+  },
+  {
+    "id": "i008",
+    "plantId": "p05",
+    "cx": 13.02,
+    "cy": 0.723,
+    "wFt": 1.418,
+    "hFt": 1.258,
+    "status": "existing"
+  },
+  {
+    "id": "i009",
+    "plantId": "p06",
+    "cx": 13.804,
+    "cy": 13.961,
+    "wFt": 2.926,
+    "hFt": 2.897,
+    "status": "existing"
+  },
+  {
+    "id": "i010",
+    "plantId": "p07",
+    "cx": 13.978,
+    "cy": 18.462,
+    "wFt": 1.918,
+    "hFt": 1.899,
+    "status": "existing"
+  },
+  {
+    "id": "i011",
+    "plantId": "p08",
+    "cx": 4.593,
+    "cy": 10.597,
+    "wFt": 2.215,
+    "hFt": 2.192,
+    "status": "existing"
+  },
+  {
+    "id": "i012",
+    "plantId": "p08",
+    "cx": 9.498492919921874,
+    "cy": 15.845827583312989,
+    "wFt": 2.484,
+    "hFt": 2.459,
+    "status": "existing"
+  },
+  {
+    "id": "i013",
+    "plantId": "p09",
+    "cx": 13.773,
+    "cy": 8.936,
+    "wFt": 2.926,
+    "hFt": 2.897,
+    "status": "existing"
+  },
+  {
+    "id": "i014",
+    "plantId": "p06",
+    "cx": 13.804,
+    "cy": 3.227,
+    "wFt": 2.926,
+    "hFt": 2.897,
+    "status": "existing"
+  },
+  {
+    "id": "i015",
+    "plantId": "p10",
+    "cx": 12.201268157958985,
+    "cy": 18.574131622314454,
+    "wFt": 1.493,
+    "hFt": 1.513,
+    "status": "existing"
+  },
+  {
+    "id": "i016",
+    "plantId": "p11",
+    "cx": 8.462,
+    "cy": 15.583,
+    "wFt": 2,
+    "hFt": 2,
+    "status": "existing"
+  },
+  {
+    "id": "i017",
+    "plantId": "p10",
+    "cx": 3.012,
+    "cy": 8.078,
+    "wFt": 1.493,
+    "hFt": 1.513,
+    "status": "existing"
+  },
+  {
+    "id": "i018",
+    "plantId": "p12",
+    "cx": 6.994,
+    "cy": 0.213,
+    "wFt": 2.165,
+    "hFt": 0.812,
+    "status": "existing"
+  },
+  {
+    "id": "i019",
+    "plantId": "p13",
+    "cx": 9.293,
+    "cy": 1.164,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i020",
+    "plantId": "p14",
+    "cx": 6.962,
+    "cy": 3.751,
+    "wFt": 1.857,
+    "hFt": 1.883,
+    "status": "existing"
+  },
+  {
+    "id": "i021",
+    "plantId": "p14",
+    "cx": 6.067,
+    "cy": 6.455,
+    "wFt": 1.303,
+    "hFt": 1.321,
+    "status": "existing"
+  },
+  {
+    "id": "i022",
+    "plantId": "p15",
+    "cx": 11.227,
+    "cy": 1.284,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i023",
+    "plantId": "p15",
+    "cx": 12.247,
+    "cy": 0.756,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i024",
+    "plantId": "p15",
+    "cx": 10.189,
+    "cy": 7.68,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i025",
+    "plantId": "p15",
+    "cx": 9.34,
+    "cy": 9.214,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i026",
+    "plantId": "p15",
+    "cx": 6.000042301177978,
+    "cy": 14.436,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i027",
+    "plantId": "p15",
+    "cx": 2.134,
+    "cy": 10.31,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i028",
+    "plantId": "p15",
+    "cx": 7.49,
+    "cy": 5.83,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i029",
+    "plantId": "p15",
+    "cx": 0.926,
+    "cy": 3.556,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i030",
+    "plantId": "p15",
+    "cx": 13.016,
+    "cy": 8.169,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i031",
+    "plantId": "p16",
+    "cx": 11.313,
+    "cy": 12.965,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i032",
+    "plantId": "p16",
+    "cx": 12.927,
+    "cy": 12.358,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i033",
+    "plantId": "p16",
+    "cx": 10.17227011871338,
+    "cy": 14.228468170166016,
+    "wFt": 1.493,
+    "hFt": 1.513,
+    "status": "existing"
+  },
+  {
+    "id": "i034",
+    "plantId": "p02",
+    "cx": 6.793,
+    "cy": 8.362,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i035",
+    "plantId": "p17",
+    "cx": 3.455,
+    "cy": 13.912,
+    "wFt": 1.5,
+    "hFt": 1.105,
+    "status": "existing"
+  },
+  {
+    "id": "i036",
+    "plantId": "p18",
+    "cx": 0.494,
+    "cy": 4.789,
+    "wFt": 1.09,
+    "hFt": 1.105,
+    "status": "existing"
+  },
+  {
+    "id": "i037",
+    "plantId": "p18",
+    "cx": 0.494,
+    "cy": 7.484,
+    "wFt": 1.09,
+    "hFt": 1.105,
+    "status": "existing"
+  },
+  {
+    "id": "i038",
+    "plantId": "p19",
+    "cx": 7.371,
+    "cy": 14.826,
+    "wFt": 2,
+    "hFt": 1.5,
+    "status": "existing"
+  },
+  {
+    "id": "i039",
+    "plantId": "p20",
+    "cx": 0.949,
+    "cy": 9.786,
+    "wFt": 1.84,
+    "hFt": 1.866,
+    "status": "existing"
+  },
+  {
+    "id": "i040",
+    "plantId": "p21",
+    "cx": 12.341,
+    "cy": 9.878,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i041",
+    "plantId": "p21",
+    "cx": 7.52818155670166,
+    "cy": 12.540835235595702,
+    "wFt": 1.367,
+    "hFt": 1.386,
+    "status": "existing"
+  },
+  {
+    "id": "i042",
+    "plantId": "p22",
+    "cx": 12.341,
+    "cy": 12.965,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i043",
+    "plantId": "p22",
+    "cx": 7.784,
+    "cy": 8.992,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i044",
+    "plantId": "p22",
+    "cx": 1.645,
+    "cy": 3.241,
+    "wFt": 1.085,
+    "hFt": 1.1,
+    "status": "existing"
+  },
+  {
+    "id": "i045",
+    "plantId": "p22",
+    "cx": 1.78,
+    "cy": 5.407,
+    "wFt": 1.085,
+    "hFt": 1.1,
+    "status": "existing"
+  },
+  {
+    "id": "i046",
+    "plantId": "p22",
+    "cx": 6.041,
+    "cy": 7.665,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i047",
+    "plantId": "p22",
+    "cx": 11.515,
+    "cy": 4.259,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i048",
+    "plantId": "p23",
+    "cx": 6.168386089324951,
+    "cy": 12.34961343383789,
+    "wFt": 1.367,
+    "hFt": 1.386,
+    "status": "existing"
+  },
+  {
+    "id": "i049",
+    "plantId": "p23",
+    "cx": 6.647,
+    "cy": 5.359,
+    "wFt": 1.367,
+    "hFt": 1.386,
+    "status": "existing"
+  },
+  {
+    "id": "i050",
+    "plantId": "p24",
+    "cx": 7.209,
+    "cy": 7.56,
+    "wFt": 1.79,
+    "hFt": 1.815,
+    "status": "existing"
+  },
+  {
+    "id": "i051",
+    "plantId": "p24",
+    "cx": 3.12,
+    "cy": 4.082,
+    "wFt": 1.418,
+    "hFt": 1.437,
+    "status": "existing"
+  },
+  {
+    "id": "i052",
+    "plantId": "p24",
+    "cx": 4.688,
+    "cy": 0.782,
+    "wFt": 0.914,
+    "hFt": 0.927,
+    "status": "existing"
+  },
+  {
+    "id": "i053",
+    "plantId": "p25",
+    "cx": 0.404,
+    "cy": 6.257,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i054",
+    "plantId": "p26",
+    "cx": 11.374,
+    "cy": 7.412,
+    "wFt": 1.386,
+    "hFt": 1.405,
+    "status": "existing"
+  },
+  {
+    "id": "i055",
+    "plantId": "p27",
+    "cx": 2.248,
+    "cy": 12.255,
+    "wFt": 3.182,
+    "hFt": 3.226,
+    "status": "existing"
+  },
+  {
+    "id": "i056",
+    "plantId": "p27",
+    "cx": 14.451,
+    "cy": 7.097,
+    "wFt": 1.294,
+    "hFt": 1.312,
+    "status": "existing"
+  },
+  {
+    "id": "i057",
+    "plantId": "p27",
+    "cx": 14.451,
+    "cy": 10.966,
+    "wFt": 1.294,
+    "hFt": 1.312,
+    "status": "existing"
+  },
+  {
+    "id": "i058",
+    "plantId": "p27",
+    "cx": 1.089,
+    "cy": 7.086,
+    "wFt": 1.085,
+    "hFt": 1.1,
+    "status": "existing"
+  },
+  {
+    "id": "i060",
+    "plantId": "p28",
+    "cx": 6.398,
+    "cy": 8.992,
+    "wFt": 1.493,
+    "hFt": 1.513,
+    "status": "existing"
+  },
+  {
+    "id": "i061",
+    "plantId": "p29",
+    "cx": 3.788,
+    "cy": 2.595,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i062",
+    "plantId": "p29",
+    "cx": 9.589,
+    "cy": 8.329,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i063",
+    "plantId": "p30",
+    "cx": 0.365,
+    "cy": 0.57,
+    "wFt": 0.704,
+    "hFt": 0.714,
+    "status": "existing"
+  },
+  {
+    "id": "i064",
+    "plantId": "p31",
+    "cx": 2.299,
+    "cy": 4.758,
+    "wFt": 0.98,
+    "hFt": 0.993,
+    "status": "existing"
+  },
+  {
+    "id": "i065",
+    "plantId": "p31",
+    "cx": 4.757214946746826,
+    "cy": 12.386615303039552,
+    "wFt": 0.98,
+    "hFt": 0.993,
+    "status": "existing"
+  },
+  {
+    "id": "i066",
+    "plantId": "p21",
+    "cx": 8.396,
+    "cy": 4.038,
+    "wFt": 1.309,
+    "hFt": 1.327,
+    "status": "existing"
+  },
+  {
+    "id": "i069",
+    "plantId": "p32",
+    "cx": 4.469,
+    "cy": 4.046,
+    "wFt": 1.282,
+    "hFt": 1.299,
+    "status": "existing"
+  },
+  {
+    "id": "i070",
+    "plantId": "p33",
+    "cx": 11.987839447021484,
+    "cy": 16.70627052307129,
+    "wFt": 1.296,
+    "hFt": 1.314,
+    "status": "existing"
+  },
+  {
+    "id": "i071",
+    "plantId": "p34",
+    "cx": 11.792828445434571,
+    "cy": 14.887288223266602,
+    "wFt": 1.296,
+    "hFt": 1.314,
+    "status": "existing"
+  },
+  {
+    "id": "i072",
+    "plantId": "p34",
+    "cx": 9.596,
+    "cy": 2.912,
+    "wFt": 1.296,
+    "hFt": 1.314,
+    "status": "existing"
+  },
+  {
+    "id": "i073",
+    "plantId": "p35",
+    "cx": 12.842,
+    "cy": 4.273,
+    "wFt": 1.296,
+    "hFt": 1.314,
+    "status": "existing"
+  },
+  {
+    "id": "i075",
+    "plantId": "p36",
+    "cx": 1.267,
+    "cy": 2.017,
+    "wFt": 0.989,
+    "hFt": 1.003,
+    "status": "existing"
+  },
+  {
+    "id": "i076",
+    "plantId": "p36",
+    "cx": 4.939244136810303,
+    "cy": 13.287289611816407,
+    "wFt": 1.518,
+    "hFt": 1.539,
+    "status": "existing"
+  },
+  {
+    "id": "i077",
+    "plantId": "p36",
+    "cx": 13.540924766540527,
+    "cy": 16.79033206176758,
+    "wFt": 1.518,
+    "hFt": 1.539,
+    "status": "existing"
+  },
+  {
+    "id": "i078",
+    "plantId": "p29",
+    "cx": 2.462,
+    "cy": 9.519,
+    "wFt": 1.172,
+    "hFt": 1.188,
+    "status": "existing"
+  },
+  {
+    "id": "i079",
+    "plantId": "p37",
+    "cx": 10.324,
+    "cy": 2.017,
+    "wFt": 0.3,
+    "hFt": 0.3,
+    "status": "existing"
+  },
+  {
+    "id": "i080",
+    "plantId": "p02",
+    "cx": 6.045,
+    "cy": 1.939,
+    "wFt": 2.597,
+    "hFt": 1.883,
+    "status": "existing"
+  },
+  {
+    "id": "i081",
+    "plantId": "p02",
+    "cx": 11.707,
+    "cy": 11.59,
+    "wFt": 2.597,
+    "hFt": 1.843,
+    "status": "existing"
+  },
+  {
+    "id": "i082",
+    "plantId": "p38",
+    "cx": 6.053,
+    "cy": 2.861,
+    "wFt": 0.3,
+    "hFt": 0.3,
+    "status": "existing"
+  },
+  {
+    "id": "imr45yd6ux95",
+    "plantId": "p19",
+    "cx": 10.329524040222168,
+    "cy": 17.560453414916992,
+    "wFt": 1.8,
+    "hFt": 1.8,
+    "status": "existing"
+  }
 ];
 
 // ─────────────────────────────────────────────────────
@@ -748,7 +2053,7 @@ const PLANT_DB = [
 // ─────────────────────────────────────────────────────
 // VIEWPORT / ZOOM STATE
 // ─────────────────────────────────────────────────────
-const BASE_LABEL = window.innerWidth <= 768 ? 0.30 : 0.25;
+const BASE_LABEL = window.innerWidth <= 768 ? 0.40 : 0.40;
 const VB = { W:17, H:22, cx:7.5, cy:10, scale:1 };
 let _pinch = null, _mapPan = null, _lastTap = 0;
 
@@ -800,6 +2105,98 @@ function migrate() {
   const evIds = new Set(['p04','p07','p36','p40']);
   S.catalog.forEach(p => { if(evIds.has(p.id) && p.winterInterest==='none') p.winterInterest='evergreen'; });
   save();
+}
+
+// ─────────────────────────────────────────────────────
+// GITHUB SYNC
+// ─────────────────────────────────────────────────────
+const GH_OWNER  = 'jzc248';
+const GH_REPO   = 'garden';
+const GH_BRANCH = 'main';
+const GH_FILE   = 'data.json';
+const GH_RAW    = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_FILE}`;
+const GH_API    = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
+
+function ghToken() { return localStorage.getItem('garden-gh-token') || ''; }
+
+async function loadFromGithub() {
+  try {
+    const resp = await fetch(GH_RAW + '?t=' + Date.now());
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (!data || !data.catalog || !data.layout) return;
+    S.catalog = data.catalog;
+    S.layout  = data.layout;
+    if (data.meta) S.meta = data.meta;
+    save();
+    migrate();
+    S.catalog.forEach(p => { if (!PLANT_DB.find(d => d.name === p.name)) PLANT_DB.push(p); });
+    buildFilterUI();
+    renderAll();
+  } catch(e) { /* offline or no data.json yet — silently ignore */ }
+}
+
+async function saveToGithub() {
+  const pw = prompt('Enter password to save:');
+  if(pw !== EDIT_PASSWORD) {
+    if(pw !== null) alert('Incorrect password.');
+    return;
+  }
+
+  let token = ghToken();
+  if (!token) {
+    token = prompt('Enter your GitHub Personal Access Token\n(saved locally in this browser only — never in the code):');
+    if (!token) return;
+    localStorage.setItem('garden-gh-token', token.trim());
+    token = token.trim();
+  }
+
+  const btn = document.getElementById('gh-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '☁️ Saving…'; }
+
+  try {
+    const data    = { catalog: S.catalog, layout: S.layout, meta: S.meta, saved: new Date().toISOString() };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+
+    // Get current file SHA — required by GitHub API to update an existing file
+    let sha = null;
+    const getResp = await fetch(GH_API, {
+      headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (getResp.ok) { sha = (await getResp.json()).sha; }
+
+    const body = {
+      message: `Garden update ${new Date().toISOString().slice(0,16).replace('T',' ')}`,
+      content,
+      branch: GH_BRANCH
+    };
+    if (sha) body.sha = sha;
+
+    const putResp = await fetch(GH_API, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (putResp.ok) {
+      if (btn) { btn.textContent = '☁️ Saved!'; setTimeout(() => { btn.textContent = '☁️ Save to GitHub'; btn.disabled = false; }, 2500); }
+    } else if (putResp.status === 401) {
+      localStorage.removeItem('garden-gh-token');
+      alert('Token rejected — your token has been cleared. Please try again with a valid token.');
+      if (btn) { btn.textContent = '☁️ Save to GitHub'; btn.disabled = false; }
+    } else {
+      const err = await putResp.json().catch(() => ({}));
+      alert('Save failed (' + putResp.status + '): ' + (err.message || 'unknown error'));
+      if (btn) { btn.textContent = '☁️ Save to GitHub'; btn.disabled = false; }
+    }
+  } catch(e) {
+    alert('Save failed: ' + e.message);
+    if (btn) { btn.textContent = '☁️ Save to GitHub'; btn.disabled = false; }
+  }
 }
 
 // ─────────────────────────────────────────────────────
@@ -1733,6 +3130,7 @@ function init() {
   addSwipeDismiss(document.getElementById('info-sheet'), ()=>{ closeSheet('info-sheet'); deselectAll(); });
   addSwipeDismiss(document.getElementById('filter-sheet'), ()=>closeSheet('filter-sheet'));
   addSwipeDismiss(document.getElementById('picker-inner'), ()=>closePicker());
+  loadFromGithub(); // silently fetch latest cloud data in background
 }
 init();
 </script>
