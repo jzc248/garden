@@ -719,6 +719,23 @@
       "native": false,
       "photoUrl": "https://static.inaturalist.org/photos/227361675/medium.jpeg",
       "notes": "Evergreen shrub; attractive reddish winter stems; deer resistant"
+    },
+    {
+      "name": "Nepeta x faassenii",
+      "commonName": "Catmint",
+      "type": "clumping",
+      "sunNeeds": "Full sun",
+      "waterNeeds": "Low",
+      "spreadAggression": "Low",
+      "spreadType": "Clumping",
+      "bloomStart": "Late April",
+      "bloomEnd": "Late September",
+      "autumnFoliage": "no",
+      "winterInterest": "none",
+      "soilNotes": "Well-drained; drought tolerant; repeat bloomer if cut back",
+      "native": false,
+      "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/3407066/medium.jpg",
+      "id": "pmr9nh44tjz6"
     }
   ],
   "layout": [
@@ -1423,8 +1440,17 @@
       "wFt": 1.8,
       "hFt": 1.8,
       "status": "existing"
+    },
+    {
+      "id": "imr9nh44txl0",
+      "plantId": "pmr9nh44tjz6",
+      "cx": 8.610678672790527,
+      "cy": 2.146925449371338,
+      "wFt": 1,
+      "hFt": 1,
+      "status": "prospective"
     }
   ],
   "meta": {},
-  "saved": "2026-07-06T19:57:20.047Z"
+  "saved": "2026-07-06T20:06:17.420Z"
 }
