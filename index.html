@@ -2613,79 +2613,69 @@ function onTouchStart(ev) {
   const t=ev.touches[0]; const id=ev.currentTarget.dataset.id;
   const i=inst(id); if(!i) return;
   const el=ev.currentTarget;
-  const origin={x:t.clientX,y:t.clientY};
-  let cancelled=false;
+  let latestX=t.clientX, latestY=t.clientY;
+  let timerFired=false;
 
-  // Show pressing animation during hold
   el.classList.add('lp-pressing');
 
-  // If finger moves significantly before timer fires, treat as accidental touch
-  const onEarlyMove=e=>{
-    const tt=e.touches[0];
-    const dx=tt.clientX-origin.x, dy=tt.clientY-origin.y;
-    if(dx*dx+dy*dy>100){
-      cancelled=true;
-      clearTimeout(lpDragTimer);
-      el.classList.remove('lp-pressing');
-      document.removeEventListener('touchmove',onEarlyMove);
-      document.removeEventListener('touchend',onEarlyEnd);
-    }
-  };
-
-  // If finger lifts before timer fires, treat as tap → open info sheet
-  const onEarlyEnd=()=>{
-    if(!cancelled){
-      clearTimeout(lpDragTimer);
-      el.classList.remove('lp-pressing');
-      onPlantClick(id);
-    }
-    document.removeEventListener('touchmove',onEarlyMove);
-    document.removeEventListener('touchend',onEarlyEnd);
-  };
-
-  document.addEventListener('touchmove',onEarlyMove,{passive:true});
-  document.addEventListener('touchend',onEarlyEnd,{passive:true});
-
-  // After 500ms hold, enter drag mode
-  const lpDragTimer=setTimeout(()=>{
-    if(cancelled) return;
-    document.removeEventListener('touchmove',onEarlyMove);
-    document.removeEventListener('touchend',onEarlyEnd);
+  const lpTimer=setTimeout(()=>{
+    timerFired=true;
     el.classList.remove('lp-pressing');
-
-    // Re-read current touch position as drag origin
-    const activeTouch=Array.from(ev.target.closest?.(document)||[ev.target])
-      .find(()=>true); // just get current touch coords via _mapPan or last known
-    const p=svgPt(origin.x,origin.y); // use hold-start position as anchor
+    el.classList.add('dragging');
+    // Use latest touch position (not 500ms-old origin) as drag anchor
+    const p=svgPt(latestX,latestY);
     const snapshot=JSON.parse(JSON.stringify(S.layout));
     _drag={id,ox:i.cx,oy:i.cy,sx:p.x,sy:p.y,moved:false,snapshot};
-    el.classList.add('dragging');
-
-    const onMove=e=>{ e.preventDefault();
-      const tt=e.touches[0]; const pp=svgPt(tt.clientX,tt.clientY);
-      const dx=pp.x-_drag.sx,dy=pp.y-_drag.sy;
-      if(Math.abs(dx)>.08||Math.abs(dy)>.08)_drag.moved=true;
-      i.cx=Math.max(-1,Math.min(16,_drag.ox+dx)); i.cy=Math.max(-1,Math.min(21,_drag.oy+dy));
-      const elNow=document.querySelector(`.plant-el[data-id="${id}"]`);
-      const lb=document.querySelector(`.plant-label[data-id="${id}"]`);
-      if(elNow){elNow.setAttribute('cx',i.cx);elNow.setAttribute('cy',i.cy);}
-      if(lb){lb.setAttribute('x',i.cx);lb.setAttribute('y',i.cy);}
-    };
-    const onEnd=()=>{
-      document.removeEventListener('touchmove',onMove);
-      document.removeEventListener('touchend',onEnd);
-      const elNow=document.querySelector(`.plant-el[data-id="${id}"]`);
-      if(elNow)elNow.classList.remove('dragging');
-      if(_drag.moved){
-        S.undoStack.push(_drag.snapshot);
-        if(S.undoStack.length>20) S.undoStack.shift();
-        save();
-      }
-      _drag=null;
-    };
-    document.addEventListener('touchmove',onMove,{passive:false});
-    document.addEventListener('touchend',onEnd,{passive:true});
   },500);
+
+  const onMove=e=>{
+    e.preventDefault();
+    const tt=e.touches[0];
+    latestX=tt.clientX; latestY=tt.clientY;
+
+    if(!timerFired) {
+      // Pre-timer: cancel if finger moved too much (accidental touch / pan)
+      const dx=tt.clientX-t.clientX, dy=tt.clientY-t.clientY;
+      if(dx*dx+dy*dy>100){
+        clearTimeout(lpTimer);
+        el.classList.remove('lp-pressing');
+        document.removeEventListener('touchmove',onMove,{passive:false});
+        document.removeEventListener('touchend',onEnd);
+      }
+      return;
+    }
+
+    if(!_drag) return;
+    const pp=svgPt(tt.clientX,tt.clientY);
+    const dx=pp.x-_drag.sx, dy=pp.y-_drag.sy;
+    if(Math.abs(dx)>.08||Math.abs(dy)>.08) _drag.moved=true;
+    i.cx=Math.max(-1,Math.min(16,_drag.ox+dx)); i.cy=Math.max(-1,Math.min(21,_drag.oy+dy));
+    const elNow=document.querySelector(`.plant-el[data-id="${id}"]`);
+    const lb=document.querySelector(`.plant-label[data-id="${id}"]`);
+    if(elNow){elNow.setAttribute('cx',i.cx);elNow.setAttribute('cy',i.cy);}
+    if(lb){lb.setAttribute('x',i.cx);lb.setAttribute('y',i.cy);}
+  };
+
+  const onEnd=()=>{
+    clearTimeout(lpTimer);
+    el.classList.remove('lp-pressing');
+    document.removeEventListener('touchmove',onMove,{passive:false});
+    document.removeEventListener('touchend',onEnd);
+    const elNow=document.querySelector(`.plant-el[data-id="${id}"]`);
+    if(elNow) elNow.classList.remove('dragging');
+    if(!timerFired) {
+      // Finger lifted before long press completed — treat as tap
+      onPlantClick(id);
+    } else if(_drag && _drag.moved) {
+      S.undoStack.push(_drag.snapshot);
+      if(S.undoStack.length>20) S.undoStack.shift();
+      save();
+    }
+    _drag=null;
+  };
+
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('touchend',onEnd);
 }
 
 document.getElementById('map-svg').addEventListener('mousedown',ev=>{
