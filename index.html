@@ -243,7 +243,7 @@
 
   <!-- Map -->
   <div id="map-wrap">
-    <div id="edit-banner">✏️ Edit — tap empty space to add · drag to move</div>
+    <div id="edit-banner">✏️ Edit — hold empty space to add · drag to move</div>
     <div id="map-card">
       <svg id="map-svg" viewBox="-1 -1 17 22" preserveAspectRatio="xMidYMid meet" style="touch-action:none">
         <g id="bg-path" transform="scale(0.003091,0.003119) translate(-511,-395)"
@@ -347,6 +347,20 @@
           <div class="fsec-row"><label><input type="checkbox" id="f-water-low" checked onchange="updateWaterFilter()"> 💧 Low</label></div>
           <div class="fsec-row"><label><input type="checkbox" id="f-water-med" checked onchange="updateWaterFilter()"> 💧💧 Medium</label></div>
           <div class="fsec-row"><label><input type="checkbox" id="f-water-high" checked onchange="updateWaterFilter()"> 💧💧💧 High</label></div>
+        </div>
+      </div>
+      <!-- Spread -->
+      <div class="fsec">
+        <div class="fsec-hdr" onclick="toggleFSec('spread')">
+          <span class="fsec-hdr-left">Spread</span>
+          <div class="fsec-hdr-right"><span class="fsec-chev" id="fsec-spread-chev">▼</span></div>
+        </div>
+        <div class="fsec-body" id="fsec-spread-body">
+          <div class="fsec-all"><button onclick="setAllSpread(true)">All</button><button onclick="setAllSpread(false)">None</button></div>
+          <div class="fsec-row"><label><input type="checkbox" id="f-spread-clumping" checked onchange="updateSpreadFilter()"> 🌿 Clumping</label></div>
+          <div class="fsec-row"><label><input type="checkbox" id="f-spread-low" checked onchange="updateSpreadFilter()"> 🌱 Low</label></div>
+          <div class="fsec-row"><label><input type="checkbox" id="f-spread-moderate" checked onchange="updateSpreadFilter()"> 🌾 Moderate</label></div>
+          <div class="fsec-row"><label><input type="checkbox" id="f-spread-aggressive" checked onchange="updateSpreadFilter()"> ⚠️ Aggressive</label></div>
         </div>
       </div>
       <!-- Status -->
@@ -786,7 +800,7 @@ const INIT_CATALOG = [
     "type": "spreading",
     "sunNeeds": "Full sun",
     "waterNeeds": "Medium",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Aggressive",
     "spreadType": "Rhizomes",
     "bloomStart": "Early September",
     "bloomEnd": "Late October",
@@ -912,7 +926,7 @@ const INIT_CATALOG = [
     "type": "clumping",
     "sunNeeds": "Full sun",
     "waterNeeds": "Low",
-    "spreadAggression": "Low",
+    "spreadAggression": "Moderate",
     "spreadType": "Self-seeds",
     "bloomStart": "Late August",
     "bloomEnd": "Late October",
@@ -984,7 +998,7 @@ const INIT_CATALOG = [
     "type": "spreading",
     "sunNeeds": "Full sun",
     "waterNeeds": "Low",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Aggressive",
     "spreadType": "Rhizomes",
     "bloomStart": "Late July",
     "bloomEnd": "Early August",
@@ -2083,7 +2097,7 @@ let S = {
   mode: 'view',
   filters: { types:null, species:null, bloomFrom:null, bloomTo:null,
              autumn:false, winterInt:false, nativeOnly:false,
-             sun:null, water:null, statusEx:true, statusPr:true },
+             sun:null, water:null, spread:null, statusEx:true, statusPr:true },
   selId: null, pendingPt: null, editingId: null,
   undoStack: [],
 };
@@ -2235,8 +2249,9 @@ function visible(i) {
   if(f.autumn    && p.autumnFoliage!=='yes') return false;
   if(f.winterInt && p.winterInterest==='none') return false;
   if(f.nativeOnly && !p.native) return false;
-  if(f.sun   && !f.sun.has(p.sunNeeds))   return false;
-  if(f.water && !f.water.has(p.waterNeeds)) return false;
+  if(f.sun    && !f.sun.has(p.sunNeeds))          return false;
+  if(f.water  && !f.water.has(p.waterNeeds))       return false;
+  if(f.spread && !f.spread.has(p.spreadAggression)) return false;
   const status = i.status||'existing';
   if(!f.statusEx && status==='existing')    return false;
   if(!f.statusPr && status==='prospective') return false;
@@ -2429,6 +2444,11 @@ function buildFilterUI() {
   document.getElementById('f-water-low').checked  = !S.filters.water || S.filters.water.has('Low');
   document.getElementById('f-water-med').checked  = !S.filters.water || S.filters.water.has('Medium');
   document.getElementById('f-water-high').checked = !S.filters.water || S.filters.water.has('High');
+  // Spread
+  document.getElementById('f-spread-clumping').checked   = !S.filters.spread || S.filters.spread.has('Clumping');
+  document.getElementById('f-spread-low').checked        = !S.filters.spread || S.filters.spread.has('Low');
+  document.getElementById('f-spread-moderate').checked   = !S.filters.spread || S.filters.spread.has('Moderate');
+  document.getElementById('f-spread-aggressive').checked = !S.filters.spread || S.filters.spread.has('Aggressive');
   // Status
   document.getElementById('f-st-ex').checked = S.filters.statusEx;
   document.getElementById('f-st-pr').checked = S.filters.statusPr;
@@ -2512,6 +2532,17 @@ function setAllWater(val) {
   ['f-water-low','f-water-med','f-water-high'].forEach(id=>{ const el=document.getElementById(id); if(el) el.checked=val; });
   updateWaterFilter();
 }
+function updateSpreadFilter() {
+  const vals = ['Clumping','Low','Moderate','Aggressive'];
+  const ids  = ['f-spread-clumping','f-spread-low','f-spread-moderate','f-spread-aggressive'];
+  const checked = ids.map(id=>document.getElementById(id)?.checked);
+  S.filters.spread = checked.every(Boolean) ? null : new Set(vals.filter((_,i)=>checked[i]));
+  renderAll();
+}
+function setAllSpread(val) {
+  ['f-spread-clumping','f-spread-low','f-spread-moderate','f-spread-aggressive'].forEach(id=>{ const el=document.getElementById(id); if(el) el.checked=val; });
+  updateSpreadFilter();
+}
 
 function updateBloomLabel() {
   const el = document.getElementById('bloom-label');
@@ -2541,7 +2572,7 @@ function applyFilters() {
 function resetFilters() {
   S.filters = {types:null,species:null,bloomFrom:null,bloomTo:null,
                autumn:false,winterInt:false,nativeOnly:false,
-               sun:null,water:null,statusEx:true,statusPr:true};
+               sun:null,water:null,spread:null,statusEx:true,statusPr:true};
   buildFilterUI();
   renderAll();
 }
@@ -2647,14 +2678,35 @@ document.getElementById('map-wrap').addEventListener('click',ev=>{
   const p=svgPt(ev.clientX,ev.clientY);
   S.pendingPt={x:p.x,y:p.y}; openPicker();
 });
-document.getElementById('map-wrap').addEventListener('touchend',ev=>{
-  if(S.mode!=='edit')return;
-  if(ev.target.closest('.plant-el'))return;
-  if(_drag)return;
-  const t=ev.changedTouches[0];
-  const p=svgPt(t.clientX,t.clientY);
-  S.pendingPt={x:p.x,y:p.y}; openPicker();
-});
+// Long-press to add plant (mobile) — 500ms hold on empty map space
+let _lpTimer = null;
+let _lpOrigin = null;
+document.getElementById('map-wrap').addEventListener('touchstart', ev => {
+  if(S.mode !== 'edit') return;
+  if(ev.target.closest('.plant-el')) return;
+  if(ev.touches.length !== 1) return; // ignore multi-touch (pinch/zoom)
+  const t = ev.touches[0];
+  _lpOrigin = {x: t.clientX, y: t.clientY};
+  _lpTimer = setTimeout(() => {
+    _lpTimer = null;
+    _lpOrigin = null;
+    const p = svgPt(t.clientX, t.clientY);
+    S.pendingPt = {x: p.x, y: p.y};
+    openPicker();
+  }, 500);
+}, {passive: true});
+document.getElementById('map-wrap').addEventListener('touchmove', ev => {
+  if(!_lpTimer) return;
+  const t = ev.touches[0];
+  const dx = t.clientX - _lpOrigin.x;
+  const dy = t.clientY - _lpOrigin.y;
+  if(dx*dx + dy*dy > 100) { // moved more than ~10px — cancel
+    clearTimeout(_lpTimer); _lpTimer = null; _lpOrigin = null;
+  }
+}, {passive: true});
+document.getElementById('map-wrap').addEventListener('touchend', ev => {
+  if(_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; _lpOrigin = null; }
+}, {passive: true});
 
 // ─────────────────────────────────────────────────────
 // PICKER
