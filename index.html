@@ -572,7 +572,7 @@ const INIT_CATALOG = [
     "type": "spreading",
     "sunNeeds": "Part sun/shade",
     "waterNeeds": "Medium",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Aggressive",
     "spreadType": "Rhizomes",
     "bloomStart": "Early September",
     "bloomEnd": "Early October",
@@ -716,7 +716,7 @@ const INIT_CATALOG = [
     "type": "grass",
     "sunNeeds": "Full sun",
     "waterNeeds": "High",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Clumping",
     "spreadType": "Rhizomes",
     "bloomStart": "Early June",
     "bloomEnd": "Late August",
@@ -734,7 +734,7 @@ const INIT_CATALOG = [
     "type": "grass",
     "sunNeeds": "Full shade",
     "waterNeeds": "Low",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Clumping",
     "spreadType": "Stolons",
     "bloomStart": "Early April",
     "bloomEnd": "Late May",
@@ -770,7 +770,7 @@ const INIT_CATALOG = [
     "type": "spreading",
     "sunNeeds": "Part sun/shade",
     "waterNeeds": "Low",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Aggressive",
     "spreadType": "Rhizomes",
     "bloomStart": "Early August",
     "bloomEnd": "Early October",
@@ -788,7 +788,7 @@ const INIT_CATALOG = [
     "type": "spreading",
     "sunNeeds": "Part sun/shade",
     "waterNeeds": "Low",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Aggressive",
     "spreadType": "Self-seeds",
     "bloomStart": "Early August",
     "bloomEnd": "Late October",
@@ -878,7 +878,7 @@ const INIT_CATALOG = [
     "type": "groundcover",
     "sunNeeds": "Part sun/shade",
     "waterNeeds": "Low",
-    "spreadAggression": "Moderate",
+    "spreadAggression": "Low",
     "spreadType": "Self-seeds",
     "bloomStart": "Early May",
     "bloomEnd": "Early June",
@@ -3045,7 +3045,7 @@ function exportData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'garden-data.json';
+  a.download = 'export-data.json';
   a.click(); URL.revokeObjectURL(a.href);
 }
 
