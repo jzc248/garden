@@ -736,6 +736,23 @@
       "native": false,
       "photoUrl": "https://inaturalist-open-data.s3.amazonaws.com/photos/3407066/medium.jpg",
       "id": "pmr9nh44tjz6"
+    },
+    {
+      "name": "Helleborus niger",
+      "commonName": "Christmas Rose",
+      "type": "clumping",
+      "sunNeeds": "Part sun/shade",
+      "waterNeeds": "Medium",
+      "spreadAggression": "Clumping",
+      "spreadType": "Clumping",
+      "bloomStart": "Early December",
+      "bloomEnd": "Late February",
+      "autumnFoliage": "no",
+      "winterInterest": "evergreen",
+      "soilNotes": "Moist, humus-rich; woodland; well-drained",
+      "native": false,
+      "photoUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Helleborus_niger.jpg",
+      "id": "pmrc2hzy7nfp"
     }
   ],
   "layout": [
@@ -751,8 +768,8 @@
     {
       "id": "i003",
       "plantId": "p01",
-      "cx": 7.057,
-      "cy": 10.733,
+      "cx": 7.811762649536133,
+      "cy": 11.096404273986817,
       "wFt": 1.5,
       "hFt": 1.5,
       "status": "existing"
@@ -832,10 +849,10 @@
     {
       "id": "i012",
       "plantId": "p08",
-      "cx": 9.498492919921874,
-      "cy": 15.845827583312989,
-      "wFt": 2.484,
-      "hFt": 2.459,
+      "cx": 9.903130256652831,
+      "cy": 15.628349784851075,
+      "wFt": 3,
+      "hFt": 3,
       "status": "existing"
     },
     {
@@ -1066,8 +1083,8 @@
     {
       "id": "i038",
       "plantId": "p19",
-      "cx": 7.371,
-      "cy": 14.826,
+      "cx": 7.8854724845886235,
+      "cy": 14.704948211669922,
       "wFt": 2,
       "hFt": 1.5,
       "status": "existing"
@@ -1093,8 +1110,8 @@
     {
       "id": "i041",
       "plantId": "p21",
-      "cx": 7.52818155670166,
-      "cy": 12.540835235595702,
+      "cx": 7.993123535156251,
+      "cy": 12.395045135498046,
       "wFt": 1.367,
       "hFt": 1.386,
       "status": "existing"
@@ -1156,8 +1173,8 @@
     {
       "id": "i048",
       "plantId": "p23",
-      "cx": 6.168386089324951,
-      "cy": 12.34961343383789,
+      "cx": 7.17173539352417,
+      "cy": 12.38781858062744,
       "wFt": 1.367,
       "hFt": 1.386,
       "status": "existing"
@@ -1300,8 +1317,8 @@
     {
       "id": "i065",
       "plantId": "p31",
-      "cx": 4.757214946746826,
-      "cy": 12.386615303039552,
+      "cx": 5.0691265296936034,
+      "cy": 12.662363555908204,
       "wFt": 0.98,
       "hFt": 0.993,
       "status": "existing"
@@ -1372,10 +1389,10 @@
     {
       "id": "i076",
       "plantId": "p36",
-      "cx": 4.939244136810303,
-      "cy": 13.287289611816407,
-      "wFt": 1.518,
-      "hFt": 1.539,
+      "cx": 4.509800777435303,
+      "cy": 13.581120483398438,
+      "wFt": 1,
+      "hFt": 1,
       "status": "existing"
     },
     {
@@ -1458,8 +1475,44 @@
       "wFt": 1,
       "hFt": 1,
       "status": "existing"
+    },
+    {
+      "id": "imrc2g0760p8",
+      "plantId": "p16",
+      "cx": 10.700399398803711,
+      "cy": 10.511090278625488,
+      "wFt": 1.5,
+      "hFt": 1.5,
+      "status": "existing"
+    },
+    {
+      "id": "imrc2hzy7f7j",
+      "plantId": "pmrc2hzy7nfp",
+      "cx": 6.557950019836426,
+      "cy": 11.264046669006348,
+      "wFt": 1,
+      "hFt": 1,
+      "status": "existing"
+    },
+    {
+      "id": "imrc2i73rcnf",
+      "plantId": "pmrc2hzy7nfp",
+      "cx": 9.136722564697266,
+      "cy": 11.033424377441406,
+      "wFt": 1,
+      "hFt": 1,
+      "status": "existing"
+    },
+    {
+      "id": "imrc2ihtpdcx",
+      "plantId": "p24",
+      "cx": 8.391858100891113,
+      "cy": 11.128924369812012,
+      "wFt": 1,
+      "hFt": 1,
+      "status": "existing"
     }
   ],
   "meta": {},
-  "saved": "2026-07-08T12:34:23.582Z"
+  "saved": "2026-07-08T12:45:19.241Z"
 }
