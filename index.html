@@ -64,6 +64,10 @@
     }
     .plant-label { pointer-events: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     .plant-label.dimmed { opacity: .07; }
+    .hardscape-el { cursor: pointer; }
+    .hardscape-el.lp-pressing { animation: lp-pulse .5s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+    .hardscape-el.selected { filter: drop-shadow(0 0 .15px #5a4a3a); }
+    #stone-btn.active { background: #8a7a6a; color: #fff; }
 
     #edit-banner {
       display: none; position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
@@ -243,6 +247,7 @@
       <button class="btn btn-icon" id="filter-btn" title="Filter" aria-label="Filter"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="8" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="10" cy="18" r="2" fill="currentColor" stroke="none"/></svg></button>
       <button class="btn btn-icon" id="grid-btn" onclick="toggleGrid()" title="Toggle 1ft grid" style="opacity:0.5">⊞</button>
       <button class="btn btn-icon" id="undo-btn" onclick="undo()" title="Undo last move" style="display:none">↩</button>
+      <button class="btn btn-icon" id="stone-btn" onclick="toggleStoneMode()" title="Place stepping stone" style="display:none">🪨</button>
       <button class="btn btn-blue" id="mode-btn" onclick="toggleMode()">✏️ Edit</button>
     </div>
   </div>
@@ -257,6 +262,7 @@
           <path d="M511.001 395 5364 395 5364 3608.96 5364 3608.96 5364 6807 4739.8 6807 4739.8 6802.58 4677.38 6799.69C4314.83 6766.04 4007.03 6563.1 3850.06 6278.72L3826.96 6231.62 3823.99 6231.62 3821.9 6226.48C3574.1 5657.18 2980.55 5247.93 2278.28 5215.38L2197.47 5213.52 2197.47 5207.78 2168.48 5208.5C1281.69 5208.5 557.55 4533.29 513.157 3684.21L511.194 3608.96 511.001 3608.96 511.001 3601.53 511 3601.51 511.001 3601.5Z"/>
         </g>
         <g id="grid-g" style="display:none"></g>
+        <g id="hardscape-g"></g>
         <g id="plants-g"></g>
         <g id="labels-g"></g>
       </svg>
@@ -395,6 +401,39 @@
         <button class="sidebar-back-btn" onclick="showSidebarFilters()">← Filters</button>
       </div>
       <div class="sheet-body" id="sidebar-card-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── STONE EDIT SHEET ── -->
+<div class="sheet" id="stone-sheet">
+  <div class="sheet-pull"></div>
+  <div class="sheet-hdr">
+    <span class="sheet-title">Edit Stone</span>
+    <button class="sheet-x" onclick="closeSheet('stone-sheet')">✕</button>
+  </div>
+  <div class="sheet-body" style="padding-bottom:20px">
+    <div class="frow2">
+      <div>
+        <label class="flbl">Width (ft)</label>
+        <input type="number" class="finput" id="stone-w" step="0.1" min="0.2">
+      </div>
+      <div>
+        <label class="flbl">Height (ft)</label>
+        <input type="number" class="finput" id="stone-h" step="0.1" min="0.2">
+      </div>
+    </div>
+    <div class="frow">
+      <label class="flbl">Rotation (°)</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+        <button class="btn btn-icon" onclick="rotateStone(-90)" style="font-size:12px;padding:6px 10px">−90°</button>
+        <input type="number" class="finput" id="stone-rot" step="1" min="-360" max="360" style="flex:1;text-align:center">
+        <button class="btn btn-icon" onclick="rotateStone(90)" style="font-size:12px;padding:6px 10px">+90°</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn btn-green" style="flex:1" onclick="saveStoneEdit()">Done</button>
+      <button class="btn" style="background:#ff3b30;color:#fff;flex:1" onclick="deleteStone()">Delete</button>
     </div>
   </div>
 </div>
@@ -1977,6 +2016,8 @@ const INIT_LAYOUT = [
   }
 ];
 
+const INIT_HARDSCAPE = [];
+
 // ─────────────────────────────────────────────────────
 // PLANT LOOKUP DB  (east coast natives + common garden)
 // ─────────────────────────────────────────────────────
@@ -2071,6 +2112,17 @@ const PLANT_DB = [
   // ── Additional garden favorites ──
   {name:'Nepeta x faassenii',        commonName:'Catmint',                type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',     spreadType:'Clumping',  bloomStart:'Late May',   bloomEnd:'Late July',autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained; drought tolerant; repeat bloomer if cut back',native:false,photoUrl:'https://upload.wikimedia.org/wikipedia/commons/3/3f/Nepeta_faassenii6.jpg'},
   {name:'Knautia macedonica',        commonName:'Knautia',                type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Low',     spreadType:'Self-seeds',bloomStart:'Early June',   bloomEnd:'Late September',autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained; drought tolerant; lean soil preferred',native:false,photoUrl:'https://upload.wikimedia.org/wikipedia/commons/8/80/Knautia_macedonica1.jpg'},
+  // ── User additions ──
+  {name:'Rosa rugosa',               commonName:'Rugosa Rose',            type:'shrub',      sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Aggressive',spreadType:'Stolons',   bloomStart:'Late May',     bloomEnd:'Late September',autumnFoliage:'no', winterInterest:'structural',soilNotes:'Well-drained; drought tolerant; salt tolerant; spreads by suckers',native:false,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Rosa_rugosa.jpg'},
+  {name:'Calycanthus raulstonii',    commonName:'Venus Sweetshrub',       type:'shrub',      sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Clumping', spreadType:'Clumping',  bloomStart:'Late May',     bloomEnd:'Late July',     autumnFoliage:'yes',winterInterest:'structural',soilNotes:'Moist, well-drained; adaptable; white fragrant flowers',native:false,photoUrl:'https://inaturalist-open-data.s3.amazonaws.com/photos/181649762/medium.jpg'},
+  {name:'Claytonia virginica',       commonName:'Spring Beauty',          type:'ephemeral',  sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Low',      spreadType:'Self-seeds',bloomStart:'Early March',  bloomEnd:'Late April',    autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, humus-rich; woodland; goes dormant in summer',native:true, photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Claytonia_virginica.jpg'},
+  {name:'Viola pedata',              commonName:"Bird's Foot Violet",     type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Clumping', spreadType:'Clumping',  bloomStart:'Early April',  bloomEnd:'Late May',      autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained, lean; sandy or rocky; does not tolerate clay',native:true,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Viola_pedata.jpg'},
+  {name:'Polemonium reptans',        commonName:"Jacob's Ladder",         type:'clumping',   sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Low',      spreadType:'Self-seeds',bloomStart:'Early April',  bloomEnd:'Late May',      autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, humus-rich; woodland',native:true,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Polemonium_reptans.jpg'},
+  {name:'Campanula caroliniana',     commonName:'Carolina Bellflower',    type:'clumping',   sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Low',      spreadType:'Self-seeds',bloomStart:'Late June',    bloomEnd:'Late August',   autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, sandy; tolerates wet; woodland edge',native:true,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Campanula_caroliniana.jpg'},
+  {name:'Matteuccia struthiopteris', commonName:'Ostrich Fern',           type:'groundcover',sunNeeds:'Part sun/shade',waterNeeds:'High',  spreadAggression:'Moderate', spreadType:'Stolons',   bloomStart:'',             bloomEnd:'',              autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist to wet; rich soil; spreads to form colonies',native:true,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Matteuccia_struthiopteris.jpg'},
+  {name:'Leucothoe fontanesiana',    commonName:'Dog Hobble',             type:'shrub',      sunNeeds:'Full shade',    waterNeeds:'Medium',spreadAggression:'Low',      spreadType:'Stolons',   bloomStart:'Early April',  bloomEnd:'Late May',      autumnFoliage:'yes',winterInterest:'evergreen',  soilNotes:'Moist, acidic; woodland stream banks; arching stems',native:true,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Leucothoe_fontanesiana.jpg'},
+  {name:'Coreopsis tinctoria',       commonName:'Plains Coreopsis',       type:'clumping',   sunNeeds:'Full sun',      waterNeeds:'Low',   spreadAggression:'Moderate', spreadType:'Self-seeds',bloomStart:'Early June',   bloomEnd:'Late September',autumnFoliage:'no', winterInterest:'none',      soilNotes:'Well-drained; drought tolerant; annual that reseeds freely',native:true,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Coreopsis_tinctoria.jpg'},
+  {name:'Lilium superbum',           commonName:"Turk's Cap Lily",        type:'clumping',   sunNeeds:'Part sun/shade',waterNeeds:'Medium',spreadAggression:'Low',      spreadType:'Offsets',   bloomStart:'Late July',    bloomEnd:'Late August',   autumnFoliage:'no', winterInterest:'none',      soilNotes:'Moist, acidic; woodland edge; well-drained; can reach 6-8ft',native:true,photoUrl:'https://commons.wikimedia.org/wiki/Special:FilePath/Lilium_superbum.jpg'},
 ];
 
 // ─────────────────────────────────────────────────────
@@ -2098,13 +2150,14 @@ function clampView() {
 // STATE
 // ─────────────────────────────────────────────────────
 let S = {
-  catalog: [], layout: [],
+  catalog: [], layout: [], hardscape: [],
   meta: { gardenName:'Front Yard', widthFt:15, heightFt:20 },
   mode: 'view',
   filters: { types:null, species:null, bloomFrom:null, bloomTo:null,
              autumn:false, winterInt:false, nativeOnly:false,
              sun:null, water:null, spread:null, statusEx:true, statusPr:true },
-  selId: null, pendingPt: null, editingId: null,
+  selId: null, pendingPt: null, editingId: null, editingStoneId: null,
+  stoneMode: false,
   undoStack: [],
 };
 
@@ -2112,12 +2165,16 @@ let S = {
 // STORAGE
 // ─────────────────────────────────────────────────────
 function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({catalog:S.catalog,layout:S.layout,meta:S.meta})); } catch(e){}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({catalog:S.catalog,layout:S.layout,meta:S.meta,hardscape:S.hardscape})); } catch(e){}
 }
 function loadSaved() {
   try {
     const d = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
-    if(d&&d.catalog&&d.catalog.length){ S.catalog=d.catalog; S.layout=d.layout; S.meta=d.meta||S.meta; return true; }
+    if(d&&d.catalog&&d.catalog.length){
+      S.catalog=d.catalog; S.layout=d.layout; S.meta=d.meta||S.meta;
+      S.hardscape=d.hardscape||[];
+      return true;
+    }
   } catch(e){}
   return false;
 }
@@ -2148,9 +2205,10 @@ async function loadFromGithub() {
     if (!resp.ok) return;
     const data = await resp.json();
     if (!data || !data.catalog || !data.layout) return;
-    S.catalog = data.catalog;
-    S.layout  = data.layout;
-    if (data.meta) S.meta = data.meta;
+    S.catalog   = data.catalog;
+    S.layout    = data.layout;
+    if (data.meta)      S.meta      = data.meta;
+    if (data.hardscape) S.hardscape = data.hardscape;
     save();
     migrate();
     S.catalog.forEach(p => { if (!PLANT_DB.find(d => d.name === p.name)) PLANT_DB.push(p); });
@@ -2178,7 +2236,7 @@ async function saveToGithub() {
   if (btn) { btn.disabled = true; btn.textContent = '☁️ Saving…'; }
 
   try {
-    const data    = { catalog: S.catalog, layout: S.layout, meta: S.meta, saved: new Date().toISOString() };
+    const data    = { catalog: S.catalog, layout: S.layout, meta: S.meta, hardscape: S.hardscape, saved: new Date().toISOString() };
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
 
     // Get current file SHA — required by GitHub API to update an existing file
@@ -2274,8 +2332,35 @@ function svgPt(clientX,clientY) {
 // RENDER
 // ─────────────────────────────────────────────────────
 function renderAll() {
+  renderHardscape();
   renderPlants();
   updateCount();
+}
+
+function renderHardscape() {
+  const gH = document.getElementById('hardscape-g');
+  gH.innerHTML = '';
+  S.hardscape.forEach(stone => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    el.setAttribute('x',      stone.cx - stone.wFt / 2);
+    el.setAttribute('y',      stone.cy - stone.hFt / 2);
+    el.setAttribute('width',  stone.wFt);
+    el.setAttribute('height', stone.hFt);
+    el.setAttribute('rx',     '0.12');
+    el.setAttribute('fill',        '#b8a898');
+    el.setAttribute('fill-opacity','0.88');
+    el.setAttribute('stroke',      '#8a7a6a');
+    el.setAttribute('stroke-width','0.03');
+    if (stone.rotation) {
+      el.setAttribute('transform', `rotate(${stone.rotation},${stone.cx},${stone.cy})`);
+    }
+    el.classList.add('hardscape-el');
+    if (stone.id === S.selId) el.classList.add('selected');
+    el.dataset.id = stone.id;
+    el.addEventListener('click', ev => { ev.stopPropagation(); if(S.mode==='edit') showStoneEdit(stone.id); });
+    el.addEventListener('touchstart', onStoneTouchStart, {passive:false});
+    gH.appendChild(el);
+  });
 }
 
 function renderPlants() {
@@ -2588,18 +2673,37 @@ function resetFilters() {
 // ─────────────────────────────────────────────────────
 function toggleMode() {
   S.mode = S.mode==='view'?'edit':'view';
-  const btn    = document.getElementById('mode-btn');
-  const undoBtn= document.getElementById('undo-btn');
+  const btn      = document.getElementById('mode-btn');
+  const undoBtn  = document.getElementById('undo-btn');
+  const stoneBtn = document.getElementById('stone-btn');
   if(S.mode==='edit') {
     btn.textContent='👁 View'; btn.className='btn btn-orange';
     document.body.classList.add('edit-mode');
     undoBtn.style.display='';
+    stoneBtn.style.display='';
   } else {
     btn.textContent='✏️ Edit'; btn.className='btn btn-blue';
     document.body.classList.remove('edit-mode');
     undoBtn.style.display='none';
+    stoneBtn.style.display='none';
+    S.stoneMode = false;
+    stoneBtn.classList.remove('active');
   }
   closeAllSheets(); deselectAll();
+}
+
+function toggleStoneMode() {
+  S.stoneMode = !S.stoneMode;
+  const btn = document.getElementById('stone-btn');
+  btn.classList.toggle('active', S.stoneMode);
+}
+
+function placeStone(x, y) {
+  const stone = { id: uid('h'), cx: x, cy: y, wFt: 1.0, hFt: 1.5, rotation: 0 };
+  S.hardscape.push(stone);
+  S.stoneMode = false;
+  document.getElementById('stone-btn').classList.remove('active');
+  save(); renderHardscape();
 }
 
 // ─────────────────────────────────────────────────────
@@ -2712,22 +2816,122 @@ document.getElementById('map-svg').addEventListener('mousedown',ev=>{
 });
 
 // ─────────────────────────────────────────────────────
+// STONE DRAG  (touch + mouse, long-press to activate)
+// ─────────────────────────────────────────────────────
+let _stoneDrag = null;
+
+function onStoneTouchStart(ev) {
+  if(S.mode!=='edit') return;
+  ev.preventDefault();
+  const t=ev.touches[0]; const id=ev.currentTarget.dataset.id;
+  const stone=S.hardscape.find(h=>h.id===id); if(!stone) return;
+  const el=ev.currentTarget;
+  let latestX=t.clientX, latestY=t.clientY;
+  let timerFired=false;
+
+  el.classList.add('lp-pressing');
+
+  const lpTimer=setTimeout(()=>{
+    timerFired=true;
+    el.classList.remove('lp-pressing');
+    el.classList.add('dragging');
+    const p=svgPt(latestX,latestY);
+    _stoneDrag={id,ox:stone.cx,oy:stone.cy,sx:p.x,sy:p.y,moved:false};
+  },500);
+
+  const onMove=e=>{
+    e.preventDefault();
+    const tt=e.touches[0];
+    latestX=tt.clientX; latestY=tt.clientY;
+    if(!timerFired){
+      const dx=tt.clientX-t.clientX, dy=tt.clientY-t.clientY;
+      if(dx*dx+dy*dy>100){
+        clearTimeout(lpTimer);
+        el.classList.remove('lp-pressing');
+        document.removeEventListener('touchmove',onMove,{passive:false});
+        document.removeEventListener('touchend',onEnd);
+      }
+      return;
+    }
+    if(!_stoneDrag) return;
+    const pp=svgPt(tt.clientX,tt.clientY);
+    const dx=pp.x-_stoneDrag.sx, dy=pp.y-_stoneDrag.sy;
+    if(Math.abs(dx)>.08||Math.abs(dy)>.08) _stoneDrag.moved=true;
+    stone.cx=Math.max(-1,Math.min(16,_stoneDrag.ox+dx));
+    stone.cy=Math.max(-1,Math.min(21,_stoneDrag.oy+dy));
+    const rot=stone.rotation||0;
+    el.setAttribute('x', stone.cx-stone.wFt/2);
+    el.setAttribute('y', stone.cy-stone.hFt/2);
+    if(rot) el.setAttribute('transform',`rotate(${rot},${stone.cx},${stone.cy})`);
+  };
+
+  const onEnd=()=>{
+    clearTimeout(lpTimer);
+    el.classList.remove('lp-pressing','dragging');
+    document.removeEventListener('touchmove',onMove,{passive:false});
+    document.removeEventListener('touchend',onEnd);
+    if(!timerFired){
+      showStoneEdit(id);
+    } else if(_stoneDrag&&_stoneDrag.moved){
+      save();
+    }
+    _stoneDrag=null;
+  };
+
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('touchend',onEnd);
+}
+
+document.getElementById('map-svg').addEventListener('mousedown',ev=>{
+  if(S.mode!=='edit') return;
+  const el=ev.target.closest('.hardscape-el'); if(!el) return;
+  ev.preventDefault();
+  const id=el.dataset.id;
+  const stone=S.hardscape.find(h=>h.id===id); if(!stone) return;
+  const p=svgPt(ev.clientX,ev.clientY);
+  _stoneDrag={id,ox:stone.cx,oy:stone.cy,sx:p.x,sy:p.y,moved:false};
+  el.classList.add('dragging');
+  const onMove=e=>{
+    const pp=svgPt(e.clientX,e.clientY);
+    const dx=pp.x-_stoneDrag.sx, dy=pp.y-_stoneDrag.sy;
+    if(Math.abs(dx)>.04||Math.abs(dy)>.04) _stoneDrag.moved=true;
+    stone.cx=Math.max(-1,Math.min(16,_stoneDrag.ox+dx));
+    stone.cy=Math.max(-1,Math.min(21,_stoneDrag.oy+dy));
+    const rot=stone.rotation||0;
+    el.setAttribute('x', stone.cx-stone.wFt/2);
+    el.setAttribute('y', stone.cy-stone.hFt/2);
+    if(rot) el.setAttribute('transform',`rotate(${rot},${stone.cx},${stone.cy})`);
+  };
+  const onUp=()=>{
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    el.classList.remove('dragging');
+    if(_stoneDrag.moved){ save(); }
+    else showStoneEdit(id);
+    _stoneDrag=null;
+  };
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+});
+
+// ─────────────────────────────────────────────────────
 // ADD PLANT  (desktop: single click on empty space; mobile: long press — see below)
 // ─────────────────────────────────────────────────────
 let _lastTouchTime = 0; // used to suppress the synthetic click browsers fire after a touch
 document.getElementById('map-wrap').addEventListener('click',ev=>{
   if(Date.now() - _lastTouchTime < 600) return; // ignore post-touch synthetic click
   if(S.mode!=='edit')return;
-  if(ev.target.closest('.plant-el'))return;
+  if(ev.target.closest('.plant-el')||ev.target.closest('.hardscape-el'))return;
   const p=svgPt(ev.clientX,ev.clientY);
+  if(S.stoneMode){ placeStone(p.x,p.y); return; }
   S.pendingPt={x:p.x,y:p.y}; openPicker();
 });
-// Long-press to add plant (mobile) — 500ms hold on empty map space
+// Long-press to add plant/stone (mobile) — 500ms hold on empty map space
 let _lpTimer = null;
 let _lpOrigin = null;
 document.getElementById('map-wrap').addEventListener('touchstart', ev => {
   if(S.mode !== 'edit') return;
-  if(ev.target.closest('.plant-el')) return;
+  if(ev.target.closest('.plant-el') || ev.target.closest('.hardscape-el')) return;
   if(ev.touches.length !== 1) return;
   const t = ev.touches[0];
   _lpOrigin = {x: t.clientX, y: t.clientY};
@@ -2735,6 +2939,7 @@ document.getElementById('map-wrap').addEventListener('touchstart', ev => {
     _lpTimer = null;
     _lpOrigin = null;
     const p = svgPt(t.clientX, t.clientY);
+    if(S.stoneMode) { placeStone(p.x, p.y); return; }
     S.pendingPt = {x: p.x, y: p.y};
     openPicker();
   }, 500);
@@ -2943,6 +3148,43 @@ function resizeInst(id, dim, val) {
 function setInstStatus(id, val) {
   const i = inst(id); if(!i) return;
   i.status = val; save();
+}
+
+// ─────────────────────────────────────────────────────
+// STONE EDIT
+// ─────────────────────────────────────────────────────
+function showStoneEdit(id) {
+  const stone = S.hardscape.find(h=>h.id===id); if(!stone) return;
+  S.editingStoneId = id;
+  document.getElementById('stone-w').value   = stone.wFt.toFixed(2);
+  document.getElementById('stone-h').value   = stone.hFt.toFixed(2);
+  document.getElementById('stone-rot').value = stone.rotation || 0;
+  openSheet('stone-sheet');
+}
+
+function saveStoneEdit() {
+  const stone = S.hardscape.find(h=>h.id===S.editingStoneId); if(!stone) return;
+  const w   = parseFloat(document.getElementById('stone-w').value);
+  const h   = parseFloat(document.getElementById('stone-h').value);
+  const rot = parseFloat(document.getElementById('stone-rot').value) || 0;
+  if(!isNaN(w) && w>=0.2) stone.wFt = w;
+  if(!isNaN(h) && h>=0.2) stone.hFt = h;
+  stone.rotation = rot;
+  closeSheet('stone-sheet');
+  S.editingStoneId = null;
+  save(); renderHardscape();
+}
+
+function rotateStone(delta) {
+  const cur = parseFloat(document.getElementById('stone-rot').value) || 0;
+  document.getElementById('stone-rot').value = ((cur + delta + 360) % 360);
+}
+
+function deleteStone() {
+  S.hardscape = S.hardscape.filter(h=>h.id!==S.editingStoneId);
+  closeSheet('stone-sheet');
+  S.editingStoneId = null;
+  save(); renderHardscape();
 }
 
 // ─────────────────────────────────────────────────────
@@ -3216,8 +3458,9 @@ function initZoomPan() {
 // ─────────────────────────────────────────────────────
 function init() {
   if(!loadSaved()) {
-    S.catalog=JSON.parse(JSON.stringify(INIT_CATALOG));
-    S.layout =JSON.parse(JSON.stringify(INIT_LAYOUT));
+    S.catalog   = JSON.parse(JSON.stringify(INIT_CATALOG));
+    S.layout    = JSON.parse(JSON.stringify(INIT_LAYOUT));
+    S.hardscape = JSON.parse(JSON.stringify(INIT_HARDSCAPE));
     save();
   }
   migrate();
@@ -3230,6 +3473,7 @@ function init() {
   addSwipeDismiss(document.getElementById('info-sheet'), ()=>{ closeSheet('info-sheet'); deselectAll(); });
   addSwipeDismiss(document.getElementById('filter-sheet'), ()=>closeSheet('filter-sheet'));
   addSwipeDismiss(document.getElementById('picker-inner'), ()=>closePicker());
+  addSwipeDismiss(document.getElementById('stone-sheet'), ()=>closeSheet('stone-sheet'));
   loadFromGithub(); // silently fetch latest cloud data in background
 }
 init();
